@@ -1,18 +1,15 @@
 # Config file untuk Streamlit App
-# Salin file ini dan sesuaikan dengan setup Anda
+# (Pola berdasarkan copy_dari_09.py)
 
-# Path ke model fine-tuned
-# Contoh: ./models/indobart-v2-detik-final-20251201-061311
-# Gunakan path lokal jika sudah download model: "./models/indobart-v2-detik-final"
-# Atau gunakan HuggingFace Hub: "indobenchmark/indobart-v2"
-MODEL_PATH = "indobenchmark/indobart-v2"  # Using base model from HuggingFace Hub
+# Model Configuration
+# Model langsung dari HuggingFace Hub
+MODEL_PATH = "indobenchmark/indobart-v2"  # Model IndoBART-v2 dari HuggingFace
 
 # Generation Parameters (default values)
 DEFAULT_NUM_SENTENCES = 3
 DEFAULT_MAX_OUTPUT_LENGTH = 100
 DEFAULT_MAX_INPUT_LENGTH = 800
 DEFAULT_NUM_BEAMS = 4
-DEFAULT_TEMPERATURE = 1.0
 
 # Processing Settings
 ENABLE_CHUNKING = True  # Untuk teks panjang
@@ -29,3 +26,6 @@ LAYOUT = "wide"  # "wide" or "centered"
 # Device Settings (auto-detect jika kosong)
 # Options: "cuda", "cpu", or "" for auto-detect
 DEVICE = ""  # Kosong = auto-detect
+
+# Note: File config ini sudah tidak digunakan lagi di streamlit_app.py versi terbaru
+# Konfigurasi sekarang hardcoded di streamlit_app.py untuk konsistensi dengan copy_dari_09.py

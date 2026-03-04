@@ -2,6 +2,7 @@
 """
 Streamlit App - Indonesian Text Summarization
 Model: IndoBART-v2
+(Pola berdasarkan copy_dari_09.py)
 """
 
 import streamlit as st
@@ -9,31 +10,22 @@ import torch
 import types
 import pandas as pd
 from indobenchmark import IndoNLGTokenizer
-from transformers import AutoModelForSeq2SeqLM
+from transformers import AutoModelForSeq2SeqLM, GenerationConfig
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from typing import List
-import os
 import re
 
-# Import config
-try:
-    from config import (
-        MODEL_PATH, DEFAULT_NUM_SENTENCES, DEFAULT_MAX_OUTPUT_LENGTH,
-        DEFAULT_MAX_INPUT_LENGTH, DEFAULT_NUM_BEAMS, DEFAULT_TEMPERATURE,
-        PAGE_TITLE, PAGE_ICON, LAYOUT, DEVICE as CONFIG_DEVICE
-    )
-except ImportError:
-    # Default values if config.py not found
-    MODEL_PATH = "./models/indobart-v2-detik-final"
-    DEFAULT_NUM_SENTENCES = 3
-    DEFAULT_MAX_OUTPUT_LENGTH = 100
-    DEFAULT_MAX_INPUT_LENGTH = 800
-    DEFAULT_NUM_BEAMS = 4
-    DEFAULT_TEMPERATURE = 1.0
-    PAGE_TITLE = "Indonesian Text Summarizer"
-    PAGE_ICON = "📝"
-    LAYOUT = "wide"
-    CONFIG_DEVICE = ""
+# ============================================================
+# CONFIGURATION
+# ============================================================
+MODEL_NAME = "indobenchmark/indobart-v2"  # Model langsung dari HuggingFace
+MAX_INPUT_LEN = 800
+MAX_OUTPUT_LEN = 100
+DEFAULT_NUM_SENTENCES = 3
+DEFAULT_NUM_BEAMS = 4
+PAGE_TITLE = "Indonesian Text Summarizer"
+PAGE_ICON = "📝"
+LAYOUT = "wide"
 
 # ============================================================
 # CONFIG
@@ -49,18 +41,15 @@ st.set_page_config(
 # ============================================================
 
 @st.cache_resource
-def load_model_and_tokenizer(model_path: str):
-    """Load model dan tokenizer dengan caching"""
-    # Use config device if specified, otherwise auto-detect
-    if CONFIG_DEVICE:
-        device = CONFIG_DEVICE
-    else:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+def load_model_and_tokenizer():
+    """Load model IndoBART-v2 dan tokenizer dengan caching"""
+    # Auto-detect device
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     
-    # Load tokenizer
-    tokenizer = IndoNLGTokenizer.from_pretrained("indobenchmark/indobart-v2")
+    # Load tokenizer dari HuggingFace
+    tokenizer = IndoNLGTokenizer.from_pretrained(MODEL_NAME)
     
-    # Patch fungsi pad
+    # Patch fungsi pad untuk kompatibilitas (dari copy_dari_09.py)
     def _compat_pad(self, encoded_inputs, padding=False, max_length=None,
                     pad_to_multiple_of=None, return_attention_mask=None,
                     return_tensors=None, verbose=True, **kwargs):
@@ -73,16 +62,36 @@ def load_model_and_tokenizer(model_path: str):
         )
     tokenizer.pad = types.MethodType(_compat_pad, tokenizer)
     
-    # Load model
+    # Load model dari HuggingFace
     try:
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_path).to(device)
+        model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME).to(device)
         model.eval()
         
-        # Set default generation config
-        model.config.max_new_tokens = 100
-        model.config.early_stopping = True
-        model.config.no_repeat_ngram_size = 3
-        model.config.length_penalty = 1.0
+        # Setup pad token jika belum ada
+        if tokenizer.pad_token is None:
+            if tokenizer.eos_token:
+                tokenizer.pad_token = tokenizer.eos_token
+            else:
+                tokenizer.add_special_tokens({"pad_token": "[PAD]"})
+                model.resize_token_embeddings(len(tokenizer))
+        
+        # Set generation config (mirip copy_dari_09.py)
+        model.generation_config = GenerationConfig(
+            do_sample=False,              # deterministic untuk konsistensi
+            num_beams=4,                  # beam search untuk kualitas
+            top_p=0.9,
+            temperature=0.8,
+            top_k=40,
+            no_repeat_ngram_size=3,       # hindari pengulangan
+            repetition_penalty=1.2,
+            length_penalty=1.0,           # penalti panjang
+            max_new_tokens=128,
+            min_new_tokens=25,
+            early_stopping=True,
+            decoder_start_token_id=(getattr(model.config, "decoder_start_token_id", None)
+                                or getattr(tokenizer, "bos_token_id", None)
+                                or getattr(tokenizer, "eos_token_id", None)),
+        )
         
         return model, tokenizer, device
     except Exception as e:
@@ -112,8 +121,8 @@ def chunk_text(text: str, tokenizer, max_input_length: int = 800, stride: int = 
 
 def summarize_chunk(text: str, model, tokenizer, device="cpu",
                     max_input_length: int = 800, max_output_length: int = 100,
-                    num_beams: int = 4, temperature: float = 1.0) -> str:
-    """Ringkas 1 chunk teks"""
+                    num_beams: int = 4) -> str:
+    """Ringkas 1 chunk teks (mirip copy_dari_09.py)"""
     inputs = tokenizer(
         text,
         return_tensors="pt",
@@ -126,11 +135,10 @@ def summarize_chunk(text: str, model, tokenizer, device="cpu",
         summary_ids = model.generate(
             inputs["input_ids"],
             num_beams=num_beams,
-            max_new_tokens=max_output_length,
+            max_new_tokens=max_output_length,  # gunakan max_new_tokens bukan max_length
             early_stopping=True,
             no_repeat_ngram_size=3,
             length_penalty=1.0,
-            temperature=temperature,
         )
 
     return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
@@ -145,9 +153,8 @@ def summarize_long_text(
     max_output_length: int = 100,
     num_sentences: int = 3,
     num_beams: int = 4,
-    temperature: float = 1.0,
 ) -> str:
-    """Ringkas teks panjang dengan chunking"""
+    """Ringkas teks panjang dengan chunking (mirip copy_dari_09.py)"""
     chunks = chunk_text(text, tokenizer, max_input_length=max_input_length, stride=stride)
     summaries = []
 
@@ -158,18 +165,28 @@ def summarize_long_text(
             max_input_length=max_input_length,
             max_output_length=max_output_length,
             num_beams=num_beams,
-            temperature=temperature
         )
         summaries.append(summary)
         progress_bar.progress((i + 1) / len(chunks))
 
+    # Gabungkan semua summary dan ambil N kalimat pertama
     final_summary = " ".join(summaries).strip()
-    sentences = final_summary.split(". ")
+    
+    # Normalisasi teks
+    final_summary = final_summary.replace("\n", " ")
+    final_summary = " ".join(final_summary.split())
+    
+    # Split berdasarkan titik
+    sentences = [s.strip() for s in final_summary.split(".") if len(s.strip()) > 0]
+    
+    # Ambil N kalimat pertama
     if len(sentences) > num_sentences:
         sentences = sentences[:num_sentences]
+    
     final_summary = ". ".join(sentences).strip()
     if not final_summary.endswith("."):
         final_summary += "."
+    
     return final_summary
 
 # ============================================================
@@ -178,22 +195,15 @@ def summarize_long_text(
 
 def main():
     st.title("📝 Indonesian Text Summarizer")
-    st.markdown("**Model:** IndoBART-v2 Fine-tuned for Indonesian News Summarization")
+    st.markdown(f"**Model:** {MODEL_NAME}")
     
     # Sidebar untuk konfigurasi
     st.sidebar.header("⚙️ Configuration")
     
-    # Model path
-    default_model_path = st.sidebar.text_input(
-        "Model Path",
-        value=MODEL_PATH,
-        help="Path ke model fine-tuned IndoBART atau HuggingFace Hub model"
-    )
-    
-    # Load model button
-    if 'model' not in st.session_state or st.sidebar.button("🔄 Load/Reload Model"):
-        with st.spinner("Loading model..."):
-            model, tokenizer, device = load_model_and_tokenizer(default_model_path)
+    # Load model secara otomatis
+    if 'model' not in st.session_state:
+        with st.spinner("Loading model from HuggingFace..."):
+            model, tokenizer, device = load_model_and_tokenizer()
             if model is not None:
                 st.session_state['model'] = model
                 st.session_state['tokenizer'] = tokenizer
@@ -201,21 +211,44 @@ def main():
                 st.sidebar.success(f"✅ Model loaded on {device}")
             else:
                 st.sidebar.error("❌ Failed to load model")
+                st.error("⚠️ Gagal memuat model. Silakan refresh halaman.")
                 return
-    
-    # Check if model is loaded
-    if 'model' not in st.session_state:
-        st.warning("⚠️ Please configure and load the model first using the sidebar.")
-        st.info("💡 **Setup Instructions:**\n1. Enter the path to your trained model\n2. Click 'Load/Reload Model'\n3. Wait for the model to load")
-        return
+    else:
+        st.sidebar.success(f"✅ Model ready on {st.session_state['device']}")
     
     # Generation parameters
     st.sidebar.header("🎛️ Generation Parameters")
-    num_sentences = st.sidebar.slider("Number of Sentences", min_value=1, max_value=10, value=DEFAULT_NUM_SENTENCES)
-    max_output_length = st.sidebar.slider("Max Output Length (tokens)", min_value=50, max_value=200, value=DEFAULT_MAX_OUTPUT_LENGTH)
-    max_input_length = st.sidebar.slider("Max Input Length (tokens)", min_value=400, max_value=1024, value=DEFAULT_MAX_INPUT_LENGTH)
-    num_beams = st.sidebar.slider("Beam Search Width", min_value=1, max_value=8, value=DEFAULT_NUM_BEAMS)
-    temperature = st.sidebar.slider("Temperature", min_value=0.1, max_value=2.0, value=DEFAULT_TEMPERATURE, step=0.1)
+    num_sentences = st.sidebar.slider(
+        "Number of Sentences", 
+        min_value=1, max_value=10, 
+        value=DEFAULT_NUM_SENTENCES,
+        help="Jumlah kalimat dalam ringkasan"
+    )
+    max_output_length = st.sidebar.slider(
+        "Max Output Length (tokens)", 
+        min_value=50, max_value=200, 
+        value=MAX_OUTPUT_LEN,
+        help="Panjang maksimum output dalam token"
+    )
+    max_input_length = st.sidebar.slider(
+        "Max Input Length (tokens)", 
+        min_value=400, max_value=1024, 
+        value=MAX_INPUT_LEN,
+        help="Panjang maksimum input dalam token"
+    )
+    num_beams = st.sidebar.slider(
+        "Beam Search Width", 
+        min_value=1, max_value=8, 
+        value=DEFAULT_NUM_BEAMS,
+        help="Beam search: nilai lebih tinggi = kualitas lebih baik tapi lebih lambat"
+    )
+    
+    # Info model
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 📊 Model Info")
+    st.sidebar.markdown(f"**Source:** HuggingFace Hub")
+    st.sidebar.markdown(f"**Model ID:** `{MODEL_NAME}`")
+    st.sidebar.markdown(f"**Device:** `{st.session_state['device']}`")
     
     # Main content
     tab1, tab2, tab3 = st.tabs(["📄 Single Text", "📊 Batch Processing", "ℹ️ About"])
@@ -228,7 +261,7 @@ def main():
         text_input = st.text_area(
             "Enter Indonesian text to summarize:",
             height=300,
-            placeholder="Paste your Indonesian news article or text here..."
+            placeholder="Masukkan teks berita atau artikel dalam Bahasa Indonesia di sini..."
         )
         
         col1, col2 = st.columns([1, 5])
@@ -241,7 +274,7 @@ def main():
         
         if summarize_btn:
             if not text_input.strip():
-                st.warning("⚠️ Please enter some text to summarize.")
+                st.warning("⚠️ Silakan masukkan teks untuk diringkas.")
             else:
                 with st.spinner("Generating summary..."):
                     try:
@@ -254,11 +287,10 @@ def main():
                             max_output_length=max_output_length,
                             num_sentences=num_sentences,
                             num_beams=num_beams,
-                            temperature=temperature,
                         )
                         
                         st.success("✅ Summary generated!")
-                        st.markdown("### 📋 Summary:")
+                        st.markdown("### 📋 Ringkasan:")
                         st.info(summary)
                         
                         # Statistics
@@ -277,7 +309,7 @@ def main():
     # Tab 2: Batch Processing
     with tab2:
         st.header("Batch Processing")
-        st.markdown("Upload a CSV file with a 'text' column to summarize multiple texts at once.")
+        st.markdown("Upload file CSV dengan kolom 'text' untuk meringkas banyak teks sekaligus.")
         
         uploaded_file = st.file_uploader("Choose a CSV file", type=['csv'])
         
@@ -292,7 +324,7 @@ def main():
                 
                 # Check for 'text' column
                 if 'text' not in df.columns:
-                    st.error("❌ CSV file must contain a 'text' column")
+                    st.error("❌ File CSV harus memiliki kolom 'text'")
                 else:
                     if st.button("🚀 Process All Texts", type="primary"):
                         summaries = []
@@ -314,7 +346,6 @@ def main():
                                         max_output_length=max_output_length,
                                         num_sentences=num_sentences,
                                         num_beams=num_beams,
-                                        temperature=temperature,
                                     )
                                     summaries.append(summary)
                                 except Exception as e:
@@ -347,41 +378,51 @@ def main():
         st.header("About This App")
         st.markdown("""
         ### 📖 Overview
-        This application uses **IndoBART-v2**, a BART model fine-tuned for Indonesian text summarization.
-        The model has been specifically trained on Indonesian news articles to generate concise and 
-        informative summaries.
+        Aplikasi ini menggunakan **IndoBART-v2**, model BART yang di-pretrain khusus untuk 
+        Bahasa Indonesia. Model dimuat langsung dari HuggingFace Hub tanpa perlu fine-tuning 
+        tambahan.
         
         ### 🎯 Features
-        - **Single Text Summarization**: Summarize individual texts instantly
-        - **Batch Processing**: Process multiple texts from CSV files
-        - **Customizable Parameters**: Adjust generation settings for different use cases
-        - **Long Text Support**: Automatic chunking for texts exceeding token limits
+        - **Single Text Summarization**: Meringkas teks individual secara instan
+        - **Batch Processing**: Memproses banyak teks dari file CSV
+        - **Customizable Parameters**: Sesuaikan pengaturan generasi untuk berbagai kasus
+        - **Long Text Support**: Otomatis chunking untuk teks yang melebihi batas token
         
         ### 🔧 Technical Details
         - **Model**: IndoBART-v2 (indobenchmark/indobart-v2)
-        - **Fine-tuning**: LoRA (Low-Rank Adaptation) for efficient training
-        - **Max Input**: Up to 1024 tokens (configurable)
-        - **Generation**: Beam search with configurable parameters
+        - **Source**: HuggingFace Hub
+        - **Max Input**: Sampai 1024 tokens (configurable)
+        - **Generation**: Beam search dengan parameter yang dapat dikonfigurasi
+        - **Device**: Auto-detect CUDA/CPU
         
-        ### 📊 Model Performance
-        The model has been evaluated on Indonesian news summarization tasks with the following metrics:
-        - ROUGE-1, ROUGE-2, ROUGE-L scores
-        - Training on combined MC, MMC, and Detik datasets
+        ### 📊 Generation Parameters
+        - **Num Beams**: Beam search width - nilai lebih tinggi = kualitas lebih baik
+        - **Max Output Length**: Panjang maksimum output dalam token
+        - **Max Input Length**: Panjang maksimum input, teks lebih panjang akan di-chunk
+        - **Num Sentences**: Jumlah kalimat dalam ringkasan akhir
         
         ### 💡 Usage Tips
-        - For best results, use complete sentences and well-structured text
-        - Adjust the number of sentences based on desired summary length
-        - Higher beam search values generally produce better quality but slower generation
-        - Temperature affects diversity: lower = more focused, higher = more diverse
+        - Untuk hasil terbaik, gunakan kalimat lengkap dan teks terstruktur dengan baik
+        - Sesuaikan jumlah kalimat berdasarkan panjang ringkasan yang diinginkan
+        - Nilai beam search lebih tinggi menghasilkan kualitas lebih baik namun lebih lambat
+        - Model ini bekerja paling baik dengan teks berita dalam Bahasa Indonesia
+        
+        ### 📚 Model Information
+        IndoBART-v2 adalah model sequence-to-sequence berbasis BART yang di-pretrain 
+        pada korpus Bahasa Indonesia. Model ini cocok untuk berbagai task NLG termasuk 
+        summarization, paraphrasing, dan generation.
+        
+        **Paper**: [IndoNLG: Benchmark and Resources for Evaluating Indonesian Natural Language Generation](https://aclanthology.org/2021.emnlp-main.699/)
         
         ### 🤝 Support
-        For questions or issues, please refer to the model documentation or contact the development team.
+        Untuk pertanyaan atau masalah, silakan merujuk pada dokumentasi model atau hubungi tim pengembang.
         """)
         
         st.markdown("---")
-        st.markdown("**Model Path:** `" + default_model_path + "`")
+        st.markdown(f"**Model:** `{MODEL_NAME}`")
         if 'device' in st.session_state:
             st.markdown(f"**Device:** `{st.session_state['device']}`")
+        st.markdown("**Framework:** PyTorch + Transformers + Streamlit")
 
 # ============================================================
 # RUN APP
