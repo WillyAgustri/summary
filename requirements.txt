@@ -1,0 +1,23 @@
+# Core dependencies
+streamlit>=1.28.0
+torch>=2.0.0
+
+# NLP & Model dependencies (harus urut agar tidak bentrok)
+transformers==4.45.2
+tokenizers>=0.20.0,<0.21.0
+indobenchmark-toolkit
+sentencepiece
+accelerate
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Evaluation
+datasets>=1.4.1
+evaluate
+rouge-score
+
+# Miscellaneous
+tqdm
+pyyaml
