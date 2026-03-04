@@ -3,7 +3,9 @@
 
 # Path ke model fine-tuned
 # Contoh: ./models/indobart-v2-detik-final-20251201-061311
-MODEL_PATH = "./models/indobart-v2-detik-final"
+# Gunakan path lokal jika sudah download model: "./models/indobart-v2-detik-final"
+# Atau gunakan HuggingFace Hub: "indobenchmark/indobart-v2"
+MODEL_PATH = "indobenchmark/indobart-v2"  # Using base model from HuggingFace Hub
 
 # Generation Parameters (default values)
 DEFAULT_NUM_SENTENCES = 3
