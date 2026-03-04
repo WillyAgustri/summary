@@ -233,8 +233,10 @@ def summarize_long_text(
     max_output_length: int = 100,
     num_sentences: int = 3,
     num_beams: int = 4,
+    title: str = None,   # judul opsional
+    date: str = None     # tanggal opsional
 ) -> str:
-    """Ringkas teks panjang dengan chunking (mirip copy_dari_09.py)"""
+    """Ringkas teks panjang dengan chunking (sama seperti copy_dari_09.py)"""
     chunks = chunk_text(text, tokenizer, max_input_length=max_input_length, stride=stride)
     summaries = []
 
@@ -249,24 +251,51 @@ def summarize_long_text(
         summaries.append(summary)
         progress_bar.progress((i + 1) / len(chunks))
 
-    # Gabungkan semua summary dan ambil N kalimat pertama
     final_summary = " ".join(summaries).strip()
-    
-    # Normalisasi teks
-    final_summary = final_summary.replace("\n", " ")
-    final_summary = " ".join(final_summary.split())
-    
-    # Split berdasarkan titik
-    sentences = [s.strip() for s in final_summary.split(".") if len(s.strip()) > 0]
-    
-    # Ambil N kalimat pertama
-    if len(sentences) > num_sentences:
-        sentences = sentences[:num_sentences]
-    
-    final_summary = ". ".join(sentences).strip()
+
+    # --------- NORMALISASI KALIMAT ---------
+    text = final_summary.replace("\n", " ")
+    text = " ".join(text.split())   # hilangkan spasi berlebih
+
+    # --------- PISAH KALIMAT MODEL ---------
+    sentences = [s.strip() for s in text.split(".") if len(s.strip()) > 0]
+
+    # --------- RINGKAS JIKA TERLALU PANJANG (Advanced Truncation) ---------
+    if num_sentences == 1 and len(sentences) > 0:
+        # Ambil hanya klausa pertama dari kalimat pertama untuk ringkasan 1 kalimat
+        first = sentences[0]
+
+        # Jika kalimat terlalu panjang, potong di koma pertama
+        if "," in first and len(first) > 110:
+            first = first.split(",")[0]
+
+        # Ambil maksimum 18–22 kata agar tetap 1 kalimat padat
+        words = first.split()
+        if len(words) > 22:
+            first = " ".join(words[:22])
+
+        final_summary = first
+    else:
+        # Untuk multi-sentence, ambil N kalimat pertama
+        if len(sentences) > num_sentences:
+            sentences = sentences[:num_sentences]
+        final_summary = ". ".join(sentences).strip()
+
+    # --------- TAMBAH TITIK DI AKHIR ---------
     if not final_summary.endswith("."):
         final_summary += "."
-    
+
+    # --- Susun header (judul + tanggal kalau ada) ---
+    header_parts = []
+    if title:
+        header_parts.append(f"📰 {title}")
+    if date:
+        header_parts.append(f"📅 {date}")
+
+    header = "\n".join(header_parts)
+    if header:
+        final_summary = f"{header}\n{final_summary}"
+
     return final_summary
 
 # ============================================================
@@ -347,12 +376,28 @@ def main():
         
         text_input = ""
         article_title = ""
+        article_date = ""
         
         if input_method == "📝 Manual Text":
+            # Optional: Title dan Date
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                article_title = st.text_input(
+                    "Judul (opsional):",
+                    placeholder="Masukkan judul berita...",
+                    key="manual_title"
+                )
+            with col2:
+                article_date = st.text_input(
+                    "Tanggal (opsional):",
+                    placeholder="01/01/2024",
+                    key="manual_date"
+                )
+            
             # Text input manual
             text_input = st.text_area(
                 "Enter Indonesian text to summarize:",
-                height=300,
+                height=250,
                 placeholder="Masukkan teks berita atau artikel dalam Bahasa Indonesia di sini...",
                 key="manual_text"
             )
@@ -362,6 +407,13 @@ def main():
                 "Masukkan URL berita:",
                 placeholder="https://www.detik.com/...",
                 key="url_input"
+            )
+            
+            # Optional date untuk URL
+            article_date = st.text_input(
+                "Tanggal (opsional):",
+                placeholder="01/01/2024",
+                key="url_date"
             )
             
             if url_input:
@@ -415,25 +467,29 @@ def main():
                             max_output_length=max_output_length,
                             num_sentences=num_sentences,
                             num_beams=num_beams,
+                            title=article_title if article_title.strip() else None,
+                            date=article_date if article_date.strip() else None,
                         )
                         
                         st.success("✅ Summary generated!")
                         
-                        # Tampilkan judul jika ada
-                        if article_title:
-                            st.markdown(f"### 📰 {article_title}")
-                        
                         st.markdown("### 📋 Ringkasan:")
                         st.info(summary)
                         
-                        # Statistics
+                        # Statistics (hitung tanpa header jika ada)
+                        summary_text_only = summary
+                        if article_title or article_date:
+                            # Remove header lines untuk counting
+                            lines = summary.split("\\n")
+                            summary_text_only = lines[-1] if len(lines) > 0 else summary
+                        
                         col1, col2, col3 = st.columns(3)
                         with col1:
                             st.metric("Original Words", len(text_input.split()))
                         with col2:
-                            st.metric("Summary Words", len(summary.split()))
+                            st.metric("Summary Words", len(summary_text_only.split()))
                         with col3:
-                            compression = (1 - len(summary.split()) / len(text_input.split())) * 100
+                            compression = (1 - len(summary_text_only.split()) / len(text_input.split())) * 100
                             st.metric("Compression", f"{compression:.1f}%")
                             
                     except Exception as e:
@@ -443,6 +499,7 @@ def main():
     with tab2:
         st.header("Batch Processing")
         st.markdown("Upload file CSV dengan kolom 'text' untuk meringkas banyak teks sekaligus.")
+        st.markdown("*Opsional: Tambahkan kolom 'title' dan 'date' untuk header di ringkasan.*")
         
         uploaded_file = st.file_uploader("Choose a CSV file", type=['csv'])
         
@@ -459,6 +516,18 @@ def main():
                 if 'text' not in df.columns:
                     st.error("❌ File CSV harus memiliki kolom 'text'")
                 else:
+                    # Check optional columns
+                    has_title = 'title' in df.columns
+                    has_date = 'date' in df.columns
+                    
+                    if has_title or has_date:
+                        optional_cols = []
+                        if has_title:
+                            optional_cols.append("'title'")
+                        if has_date:
+                            optional_cols.append("'date'")
+                        st.info(f"ℹ️ Kolom opsional ditemukan: {', '.join(optional_cols)}")
+                    
                     if st.button("🚀 Process All Texts", type="primary"):
                         summaries = []
                         progress_bar = st.progress(0)
@@ -467,6 +536,10 @@ def main():
                         for idx, row in df.iterrows():
                             status_text.text(f"Processing {idx+1}/{len(df)}...")
                             text = str(row['text']) if pd.notna(row['text']) else ""
+                            
+                            # Get optional columns
+                            title = str(row['title']) if has_title and pd.notna(row.get('title')) else None
+                            date = str(row['date']) if has_date and pd.notna(row.get('date')) else None
                             
                             if text.strip():
                                 try:
@@ -479,6 +552,8 @@ def main():
                                         max_output_length=max_output_length,
                                         num_sentences=num_sentences,
                                         num_beams=num_beams,
+                                        title=title,
+                                        date=date,
                                     )
                                     summaries.append(summary)
                                 except Exception as e:
@@ -492,7 +567,15 @@ def main():
                         df['generated_summary'] = summaries
                         
                         st.success("✅ All texts processed!")
-                        st.dataframe(df[['text', 'generated_summary']])
+                        
+                        # Display columns yang relevan
+                        display_cols = ['text', 'generated_summary']
+                        if has_title:
+                            display_cols.insert(0, 'title')
+                        if has_date:
+                            display_cols.insert(1 if has_title else 0, 'date')
+                        
+                        st.dataframe(df[display_cols])
                         
                         # Download button
                         csv = df.to_csv(index=False).encode('utf-8')
@@ -517,8 +600,10 @@ def main():
         
         ### 🎯 Features
         - **Single Text Summarization**: Meringkas teks individual secara instan
-        - **Batch Processing**: Memproses banyak teks dari file CSV
+        - **Title & Date Header**: Tambahkan judul dan tanggal opsional di header ringkasan
+        - **Batch Processing**: Memproses banyak teks dari file CSV (support kolom title & date)
         - **URL Extraction**: Extract dan ringkas artikel dari URL berita
+        - **Advanced Truncation**: Otomatis potong kalimat panjang untuk ringkasan 1 kalimat
         - **Customizable Parameters**: Sesuaikan pengaturan generasi untuk berbagai kasus
         - **Long Text Support**: Otomatis chunking untuk teks yang melebihi batas token
         
@@ -529,6 +614,7 @@ def main():
         - **Max Input**: 800 tokens (800 token per chunk)
         - **Max Output**: 100 tokens
         - **Generation**: Beam search (4 beams) dengan no_repeat_ngram
+        - **Advanced Features**: Sentence truncation (max 22 words), comma-based splitting
         - **Device**: Auto-detect CUDA/CPU
         
         ### 📊 Generation Parameters
@@ -536,9 +622,14 @@ def main():
         - **Max Output Length**: Panjang maksimum output dalam token (default: 100)
         - **Max Input Length**: Panjang maksimum input, teks lebih panjang akan di-chunk (default: 800)
         - **Num Sentences**: Jumlah kalimat dalam ringkasan akhir (default: 3)
+          - **1 kalimat**: Otomatis truncate di koma jika > 110 char, max 22 kata
+          - **Multi-kalimat**: Ambil N kalimat pertama dari hasil model
         
         ### 💡 Usage Tips
         - Model ini telah di-fine-tune khusus untuk ringkasan berita Indonesia
+        - **Title & Date**: Masukkan judul dan tanggal untuk header ringkasan yang informatif
+        - **1 Sentence Mode**: Cocok untuk headline/lead, otomatis dipotong jadi ringkasan ultra-padat
+        - **Batch CSV**: File CSV bisa punya kolom 'text', 'title' (opsional), 'date' (opsional)
         - Untuk hasil terbaik, gunakan kalimat lengkap dan teks terstruktur dengan baik
         - Sesuaikan jumlah kalimat berdasarkan panjang ringkasan yang diinginkan
         - Nilai beam search lebih tinggi menghasilkan kualitas lebih baik namun lebih lambat
