@@ -204,7 +204,7 @@ def chunk_text(text: str, tokenizer, max_input_length: int = 800, stride: int = 
 def summarize_chunk(text: str, model, tokenizer, device="cpu",
                     max_input_length: int = 800, max_output_length: int = 100,
                     num_beams: int = 4) -> str:
-    """Ringkas 1 chunk teks (mirip copy_dari_09.py)"""
+    """Ringkas 1 chunk teks (sama seperti copy_dari_09.py)"""
     inputs = tokenizer(
         text,
         return_tensors="pt",
@@ -216,11 +216,9 @@ def summarize_chunk(text: str, model, tokenizer, device="cpu",
     with torch.no_grad():
         summary_ids = model.generate(
             inputs["input_ids"],
-            num_beams=num_beams,
-            max_new_tokens=max_output_length,  # gunakan max_new_tokens bukan max_length
-            early_stopping=True,
-            no_repeat_ngram_size=3,
-            length_penalty=1.0,
+            # Parameter di bawah akan override generation_config jika diset
+            # Gunakan generation_config default kecuali perlu override
+            max_new_tokens=max_output_length,
         )
 
     return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
