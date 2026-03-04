@@ -8,6 +8,7 @@ tokenizers>=0.20.0,<0.21.0
 indobenchmark-toolkit
 sentencepiece
 accelerate
+peft==0.10.0
 
 # Data processing
 pandas>=2.0.0

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Streamlit App - Indonesian Text Summarization
-Model: IndoBART-v2
+Model: IndoBART-v2 + LoRA Fine-tuning
 (Pola berdasarkan copy_dari_09.py)
 """
 
@@ -9,9 +9,11 @@ import streamlit as st
 import torch
 import types
 import pandas as pd
+import os
 from indobenchmark import IndoNLGTokenizer
 from transformers import AutoModelForSeq2SeqLM, GenerationConfig
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
+from peft import PeftModel, LoraConfig, get_peft_model, TaskType
 from typing import List
 import re
 import requests
@@ -21,12 +23,13 @@ from urllib.parse import urlparse
 # ============================================================
 # CONFIGURATION
 # ============================================================
-MODEL_NAME = "indobenchmark/indobart-v2"  # Model langsung dari HuggingFace
+MODEL_NAME = "indobenchmark/indobart-v2"  # Base model dari HuggingFace
+CHECKPOINT_PATH = "outputs/indobart-v2-detik/checkpoint-800"  # Path ke checkpoint fine-tuned
 MAX_INPUT_LEN = 800
 MAX_OUTPUT_LEN = 100
 DEFAULT_NUM_SENTENCES = 3
 DEFAULT_NUM_BEAMS = 4
-PAGE_TITLE = "Indonesian Text Summarizer"
+PAGE_TITLE = "Indonesian Text Summarizer (Fine-tuned)"
 PAGE_ICON = "📝"
 LAYOUT = "wide"
 
@@ -107,7 +110,7 @@ st.set_page_config(
 
 @st.cache_resource
 def load_model_and_tokenizer():
-    """Load model IndoBART-v2 dan tokenizer dengan caching"""
+    """Load model IndoBART-v2 + LoRA fine-tuned dan tokenizer dengan caching"""
     # Auto-detect device
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
@@ -127,10 +130,10 @@ def load_model_and_tokenizer():
         )
     tokenizer.pad = types.MethodType(_compat_pad, tokenizer)
     
-    # Load model dari HuggingFace
+    # Load base model + LoRA fine-tuned checkpoint
     try:
-        model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME).to(device)
-        model.eval()
+        # Load base model dari HuggingFace
+        base_model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME).to(device)
         
         # Setup pad token jika belum ada
         if tokenizer.pad_token is None:
@@ -138,18 +141,31 @@ def load_model_and_tokenizer():
                 tokenizer.pad_token = tokenizer.eos_token
             else:
                 tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-                model.resize_token_embeddings(len(tokenizer))
+                base_model.resize_token_embeddings(len(tokenizer))
         
-        # Set generation config (mirip copy_dari_09.py)
+        # Load LoRA adapter dari checkpoint (jika ada)
+        if os.path.exists(CHECKPOINT_PATH):
+            model = PeftModel.from_pretrained(base_model, CHECKPOINT_PATH)
+            model = model.merge_and_unload()  # Merge LoRA weights ke base model
+            st.sidebar.info(f"✅ Loaded fine-tuned model from {CHECKPOINT_PATH}")
+        else:
+            st.sidebar.warning(f"⚠️ Checkpoint not found: {CHECKPOINT_PATH}")
+            st.sidebar.info("Using base model without fine-tuning")
+            model = base_model
+        
+        model = model.to(device)
+        model.eval()
+        
+        # Set generation config (sama seperti copy_dari_09.py)
         model.generation_config = GenerationConfig(
-            do_sample=False,              # deterministic untuk konsistensi
-            num_beams=4,                  # beam search untuk kualitas
+            do_sample=False,              # nonaktifkan sampling agar lebih deterministik
+            num_beams=4,                  # beam search = kualitas ringkasan naik signifikan
             top_p=0.9,
             temperature=0.8,
             top_k=40,
-            no_repeat_ngram_size=3,       # hindari pengulangan
+            no_repeat_ngram_size=3,
             repetition_penalty=1.2,
-            length_penalty=1.0,           # penalti panjang
+            length_penalty=2.0,           # penalti panjang biar ringkasan lebih padat
             max_new_tokens=128,
             min_new_tokens=25,
             early_stopping=True,
@@ -161,6 +177,7 @@ def load_model_and_tokenizer():
         return model, tokenizer, device
     except Exception as e:
         st.error(f"Error loading model: {e}")
+        st.error(f"Make sure checkpoint exists at: {CHECKPOINT_PATH}")
         return None, None, None
 
 def chunk_text(text: str, tokenizer, max_input_length: int = 800, stride: int = 400) -> List[str]:
@@ -259,8 +276,9 @@ def summarize_long_text(
 # ============================================================
 
 def main():
-    st.title("📝 Indonesian Text Summarizer")
-    st.markdown(f"**Model:** {MODEL_NAME}")
+    st.title("📝 Indonesian Text Summarizer (Fine-tuned)")
+    st.markdown(f"**Base Model:** {MODEL_NAME}")
+    st.markdown(f"**Fine-tuned Checkpoint:** {CHECKPOINT_PATH}")
     
     # Sidebar untuk konfigurasi
     st.sidebar.header("⚙️ Configuration")
@@ -495,39 +513,49 @@ def main():
         st.header("About This App")
         st.markdown("""
         ### 📖 Overview
-        Aplikasi ini menggunakan **IndoBART-v2**, model BART yang di-pretrain khusus untuk 
-        Bahasa Indonesia. Model dimuat langsung dari HuggingFace Hub tanpa perlu fine-tuning 
-        tambahan.
+        Aplikasi ini menggunakan **IndoBART-v2** yang telah di-**fine-tune** dengan teknik 
+        **LoRA (Low-Rank Adaptation)** menggunakan dataset ringkasan berita lokal Indonesia 
+        (MC, MMC, dan Detik).
         
         ### 🎯 Features
         - **Single Text Summarization**: Meringkas teks individual secara instan
         - **Batch Processing**: Memproses banyak teks dari file CSV
+        - **URL Extraction**: Extract dan ringkas artikel dari URL berita
         - **Customizable Parameters**: Sesuaikan pengaturan generasi untuk berbagai kasus
         - **Long Text Support**: Otomatis chunking untuk teks yang melebihi batas token
         
         ### 🔧 Technical Details
-        - **Model**: IndoBART-v2 (indobenchmark/indobart-v2)
-        - **Source**: HuggingFace Hub
-        - **Max Input**: Sampai 1024 tokens (configurable)
-        - **Generation**: Beam search dengan parameter yang dapat dikonfigurasi
+        - **Base Model**: IndoBART-v2 (indobenchmark/indobart-v2)
+        - **Fine-tuning**: LoRA/PEFT dengan dataset berita Indonesia
+        - **Training Data**: MC, MMC, Detik (ringkasan berita lokal)
+        - **Max Input**: 800 tokens (800 token per chunk)
+        - **Max Output**: 100 tokens
+        - **Generation**: Beam search (4 beams) dengan no_repeat_ngram
         - **Device**: Auto-detect CUDA/CPU
         
         ### 📊 Generation Parameters
-        - **Num Beams**: Beam search width - nilai lebih tinggi = kualitas lebih baik
-        - **Max Output Length**: Panjang maksimum output dalam token
-        - **Max Input Length**: Panjang maksimum input, teks lebih panjang akan di-chunk
-        - **Num Sentences**: Jumlah kalimat dalam ringkasan akhir
+        - **Num Beams**: Beam search width - nilai lebih tinggi = kualitas lebih baik (default: 4)
+        - **Max Output Length**: Panjang maksimum output dalam token (default: 100)
+        - **Max Input Length**: Panjang maksimum input, teks lebih panjang akan di-chunk (default: 800)
+        - **Num Sentences**: Jumlah kalimat dalam ringkasan akhir (default: 3)
         
         ### 💡 Usage Tips
+        - Model ini telah di-fine-tune khusus untuk ringkasan berita Indonesia
         - Untuk hasil terbaik, gunakan kalimat lengkap dan teks terstruktur dengan baik
         - Sesuaikan jumlah kalimat berdasarkan panjang ringkasan yang diinginkan
         - Nilai beam search lebih tinggi menghasilkan kualitas lebih baik namun lebih lambat
         - Model ini bekerja paling baik dengan teks berita dalam Bahasa Indonesia
         
         ### 📚 Model Information
-        IndoBART-v2 adalah model sequence-to-sequence berbasis BART yang di-pretrain 
-        pada korpus Bahasa Indonesia. Model ini cocok untuk berbagai task NLG termasuk 
-        summarization, paraphrasing, dan generation.
+        **Base Model**: IndoBART-v2 adalah model sequence-to-sequence berbasis BART yang di-pretrain 
+        pada korpus Bahasa Indonesia.
+        
+        **Fine-tuning**: Model ini telah di-fine-tune menggunakan:
+        - **Teknik**: LoRA (Low-Rank Adaptation) dengan PEFT
+        - **Dataset**: Gabungan dataset MC, MMC, dan Detik (berita Indonesia)
+        - **Parameters**: r=16, lora_alpha=32, lora_dropout=0.05
+        - **Target Modules**: q_proj, k_proj, v_proj, o_proj, fc1, fc2
+        - **Training**: 5 epochs dengan learning rate 5e-5
         
         **Paper**: [IndoNLG: Benchmark and Resources for Evaluating Indonesian Natural Language Generation](https://aclanthology.org/2021.emnlp-main.699/)
         
@@ -536,10 +564,11 @@ def main():
         """)
         
         st.markdown("---")
-        st.markdown(f"**Model:** `{MODEL_NAME}`")
+        st.markdown(f"**Base Model:** `{MODEL_NAME}`")
+        st.markdown(f"**Checkpoint:** `{CHECKPOINT_PATH}`")
         if 'device' in st.session_state:
             st.markdown(f"**Device:** `{st.session_state['device']}`")
-        st.markdown("**Framework:** PyTorch + Transformers + Streamlit")
+        st.markdown("**Framework:** PyTorch + Transformers + PEFT + Streamlit")
 
 # ============================================================
 # RUN APP
