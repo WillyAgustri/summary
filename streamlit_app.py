@@ -14,6 +14,9 @@ from transformers import AutoModelForSeq2SeqLM, GenerationConfig
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from typing import List
 import re
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 
 # ============================================================
 # CONFIGURATION
@@ -26,6 +29,68 @@ DEFAULT_NUM_BEAMS = 4
 PAGE_TITLE = "Indonesian Text Summarizer"
 PAGE_ICON = "📝"
 LAYOUT = "wide"
+
+# ============================================================
+# WEB SCRAPING FUNCTIONS
+# ============================================================
+
+def extract_text_from_url(url: str) -> tuple:
+    """Extract teks artikel dari URL berita"""
+    try:
+        # Set headers agar tidak diblock
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        # Fetch halaman
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        # Parse HTML
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Coba extract title
+        title = ""
+        title_tag = soup.find('h1') or soup.find('title')
+        if title_tag:
+            title = title_tag.get_text().strip()
+        
+        # Extract paragraf artikel
+        # Coba beberapa selector umum untuk situs berita Indonesia
+        article_text = ""
+        
+        # Method 1: Cari tag article
+        article = soup.find('article')
+        if article:
+            paragraphs = article.find_all('p')
+            article_text = ' '.join([p.get_text().strip() for p in paragraphs if len(p.get_text().strip()) > 50])
+        
+        # Method 2: Cari div dengan class yang umum untuk konten artikel
+        if not article_text:
+            content_divs = soup.find_all('div', class_=re.compile(r'(content|article|story|post-content|entry-content)', re.I))
+            for div in content_divs:
+                paragraphs = div.find_all('p')
+                text = ' '.join([p.get_text().strip() for p in paragraphs if len(p.get_text().strip()) > 50])
+                if len(text) > len(article_text):
+                    article_text = text
+        
+        # Method 3: Fallback - ambil semua paragraf dari body
+        if not article_text:
+            paragraphs = soup.find_all('p')
+            article_text = ' '.join([p.get_text().strip() for p in paragraphs if len(p.get_text().strip()) > 50])
+        
+        # Bersihkan teks
+        article_text = re.sub(r'\s+', ' ', article_text).strip()
+        
+        if not article_text:
+            return None, "Tidak dapat menemukan konten artikel di URL tersebut."
+        
+        return (title, article_text), None
+        
+    except requests.exceptions.RequestException as e:
+        return None, f"Error fetching URL: {str(e)}"
+    except Exception as e:
+        return None, f"Error parsing content: {str(e)}"
 
 # ============================================================
 # CONFIG
@@ -257,12 +322,59 @@ def main():
     with tab1:
         st.header("Single Text Summarization")
         
-        # Text input
-        text_input = st.text_area(
-            "Enter Indonesian text to summarize:",
-            height=300,
-            placeholder="Masukkan teks berita atau artikel dalam Bahasa Indonesia di sini..."
+        # Pilihan input method
+        input_method = st.radio(
+            "Pilih metode input:",
+            ["📝 Manual Text", "🔗 URL Berita"],
+            horizontal=True
         )
+        
+        text_input = ""
+        article_title = ""
+        
+        if input_method == "📝 Manual Text":
+            # Text input manual
+            text_input = st.text_area(
+                "Enter Indonesian text to summarize:",
+                height=300,
+                placeholder="Masukkan teks berita atau artikel dalam Bahasa Indonesia di sini...",
+                key="manual_text"
+            )
+        else:
+            # URL input
+            url_input = st.text_input(
+                "Masukkan URL berita:",
+                placeholder="https://www.detik.com/...",
+                key="url_input"
+            )
+            
+            if url_input:
+                if st.button("📥 Fetch Article", key="fetch_btn"):
+                    with st.spinner("Mengambil artikel dari URL..."):
+                        result, error = extract_text_from_url(url_input)
+                        if error:
+                            st.error(f"❌ {error}")
+                        else:
+                            article_title, text_input = result
+                            st.session_state['fetched_text'] = text_input
+                            st.session_state['fetched_title'] = article_title
+                            st.success("✅ Artikel berhasil diambil!")
+            
+            # Display fetched text jika ada
+            if 'fetched_text' in st.session_state:
+                text_input = st.session_state['fetched_text']
+                article_title = st.session_state.get('fetched_title', '')
+                
+                if article_title:
+                    st.markdown(f"**Judul:** {article_title}")
+                
+                st.text_area(
+                    "Teks artikel yang diambil:",
+                    value=text_input,
+                    height=200,
+                    key="display_fetched",
+                    disabled=True
+                )
         
         col1, col2 = st.columns([1, 5])
         with col1:
@@ -274,7 +386,7 @@ def main():
         
         if summarize_btn:
             if not text_input.strip():
-                st.warning("⚠️ Silakan masukkan teks untuk diringkas.")
+                st.warning("⚠️ Silakan masukkan teks atau fetch artikel dari URL terlebih dahulu.")
             else:
                 with st.spinner("Generating summary..."):
                     try:
@@ -290,6 +402,11 @@ def main():
                         )
                         
                         st.success("✅ Summary generated!")
+                        
+                        # Tampilkan judul jika ada
+                        if article_title:
+                            st.markdown(f"### 📰 {article_title}")
+                        
                         st.markdown("### 📋 Ringkasan:")
                         st.info(summary)
                         
