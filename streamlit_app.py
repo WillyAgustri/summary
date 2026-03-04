@@ -38,7 +38,7 @@ LAYOUT = "wide"
 # ============================================================
 
 def extract_text_from_url(url: str) -> tuple:
-    """Extract teks artikel dari URL berita"""
+    """Extract teks artikel dari URL berita (sama seperti copy_dari_09.py)"""
     try:
         # Set headers agar tidak diblock
         headers = {
@@ -46,49 +46,71 @@ def extract_text_from_url(url: str) -> tuple:
         }
         
         # Fetch halaman
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=30)
         response.raise_for_status()
         
         # Parse HTML
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Coba extract title
+        # --- Extract Title ---
         title = ""
         title_tag = soup.find('h1') or soup.find('title')
         if title_tag:
             title = title_tag.get_text().strip()
+        if not title:
+            title = "Tanpa Judul"
         
-        # Extract paragraf artikel
-        # Coba beberapa selector umum untuk situs berita Indonesia
+        # --- Auto-extract Date dari konten ---
+        date = None
+        # Coba pattern tanggal Indonesia: "5 Desember 2024", "01 Januari 2025"
+        match = re.search(r"\d{1,2}\s+\w+\s+\d{4}", soup.get_text())
+        if match:
+            date = match.group(0)
+        
+        # --- Extract paragraf artikel ---
         article_text = ""
         
-        # Method 1: Cari tag article
-        article = soup.find('article')
-        if article:
-            paragraphs = article.find_all('p')
-            article_text = ' '.join([p.get_text().strip() for p in paragraphs if len(p.get_text().strip()) > 50])
+        # Method 1: Cari container umum untuk berita
+        container = soup.find('div', class_='single-content') or soup.find('div', class_='entry-content')
         
-        # Method 2: Cari div dengan class yang umum untuk konten artikel
-        if not article_text:
+        # Method 2: Cari tag article
+        if not container:
+            container = soup.find('article')
+        
+        # Method 3: Cari div dengan class yang umum untuk konten artikel
+        if not container:
             content_divs = soup.find_all('div', class_=re.compile(r'(content|article|story|post-content|entry-content)', re.I))
-            for div in content_divs:
-                paragraphs = div.find_all('p')
-                text = ' '.join([p.get_text().strip() for p in paragraphs if len(p.get_text().strip()) > 50])
-                if len(text) > len(article_text):
-                    article_text = text
+            if content_divs:
+                container = content_divs[0]
         
-        # Method 3: Fallback - ambil semua paragraf dari body
-        if not article_text:
+        # Extract paragraphs
+        if container:
+            paragraphs = container.find_all('p')
+        else:
+            # Fallback - ambil semua paragraf dari body
             paragraphs = soup.find_all('p')
-            article_text = ' '.join([p.get_text().strip() for p in paragraphs if len(p.get_text().strip()) > 50])
         
-        # Bersihkan teks
+        # --- Clean & filter paragraphs ---
+        clean_paragraphs = []
+        for p in paragraphs:
+            text = p.get_text(" ", strip=True)
+            if text and len(text) > 50:
+                # Bersihkan teks sampah umum (watermark, copyright, dll)
+                text = re.sub(r"\b(Dibaca|Foto|©|All rights reserved|MTD|WF|DINAS KOMUNIKASI.*)\b.*", "", text)
+                text = re.sub(r"\b(Baca juga|Berita terkait|Simak video|ADVERTISEMENT|Halaman selanjutnya)\b.*", "", text, flags=re.IGNORECASE)
+                text = text.strip()
+                if text:
+                    clean_paragraphs.append(text)
+        
+        article_text = " ".join(clean_paragraphs)
+        
+        # Normalisasi spasi
         article_text = re.sub(r'\s+', ' ', article_text).strip()
         
         if not article_text:
             return None, "Tidak dapat menemukan konten artikel di URL tersebut."
         
-        return (title, article_text), None
+        return (title, date, article_text), None
         
     except requests.exceptions.RequestException as e:
         return None, f"Error fetching URL: {str(e)}"
@@ -409,13 +431,6 @@ def main():
                 key="url_input"
             )
             
-            # Optional date untuk URL
-            article_date = st.text_input(
-                "Tanggal (opsional):",
-                placeholder="01/01/2024",
-                key="url_date"
-            )
-            
             if url_input:
                 if st.button("📥 Fetch Article", key="fetch_btn"):
                     with st.spinner("Mengambil artikel dari URL..."):
@@ -423,18 +438,37 @@ def main():
                         if error:
                             st.error(f"❌ {error}")
                         else:
-                            article_title, text_input = result
+                            article_title, extracted_date, text_input = result
                             st.session_state['fetched_text'] = text_input
                             st.session_state['fetched_title'] = article_title
-                            st.success("✅ Artikel berhasil diambil!")
+                            st.session_state['fetched_date'] = extracted_date
+                            
+                            if extracted_date:
+                                st.success(f"✅ Artikel berhasil diambil! (Tanggal terdeteksi: {extracted_date})")
+                            else:
+                                st.success("✅ Artikel berhasil diambil!")
             
-            # Display fetched text jika ada
+            # Display fetched text dan info jika ada
             if 'fetched_text' in st.session_state:
                 text_input = st.session_state['fetched_text']
                 article_title = st.session_state.get('fetched_title', '')
+                article_date = st.session_state.get('fetched_date', '')
                 
-                if article_title:
-                    st.markdown(f"**Judul:** {article_title}")
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    if article_title:
+                        st.markdown(f"**Judul:** {article_title}")
+                with col2:
+                    if article_date:
+                        st.markdown(f"**📅 Tanggal:** {article_date}")
+                
+                # Optional: override tanggal jika user mau
+                if not article_date:
+                    article_date = st.text_input(
+                        "Tanggal tidak terdeteksi. Masukkan manual (opsional):",
+                        placeholder="01 Januari 2024",
+                        key="url_date_manual"
+                    )
                 
                 st.text_area(
                     "Teks artikel yang diambil:",
@@ -603,6 +637,8 @@ def main():
         - **Title & Date Header**: Tambahkan judul dan tanggal opsional di header ringkasan
         - **Batch Processing**: Memproses banyak teks dari file CSV (support kolom title & date)
         - **URL Extraction**: Extract dan ringkas artikel dari URL berita
+          - **Auto-detect Date**: Otomatis ekstrak tanggal publikasi dari artikel
+          - **Smart Text Cleaning**: Otomatis filter watermark, copyright, dan teks sampah
         - **Advanced Truncation**: Otomatis potong kalimat panjang untuk ringkasan 1 kalimat
         - **Customizable Parameters**: Sesuaikan pengaturan generasi untuk berbagai kasus
         - **Long Text Support**: Otomatis chunking untuk teks yang melebihi batas token
@@ -614,7 +650,10 @@ def main():
         - **Max Input**: 800 tokens (800 token per chunk)
         - **Max Output**: 100 tokens
         - **Generation**: Beam search (4 beams) dengan no_repeat_ngram
-        - **Advanced Features**: Sentence truncation (max 22 words), comma-based splitting
+        - **Advanced Features**: 
+          - Sentence truncation (max 22 words untuk 1 kalimat)
+          - Auto date extraction (regex: "\d{1,2}\s+\w+\s+\d{4}")
+          - Text cleaning (filter: watermark, copyright, metadata)
         - **Device**: Auto-detect CUDA/CPU
         
         ### 📊 Generation Parameters
@@ -628,6 +667,8 @@ def main():
         ### 💡 Usage Tips
         - Model ini telah di-fine-tune khusus untuk ringkasan berita Indonesia
         - **Title & Date**: Masukkan judul dan tanggal untuk header ringkasan yang informatif
+        - **URL Mode**: Tanggal otomatis terdeteksi dari artikel (format: "5 Desember 2024")
+        - **Text Cleaning**: Scraper otomatis remove watermark (MTD, WF), copyright, dan metadata
         - **1 Sentence Mode**: Cocok untuk headline/lead, otomatis dipotong jadi ringkasan ultra-padat
         - **Batch CSV**: File CSV bisa punya kolom 'text', 'title' (opsional), 'date' (opsional)
         - Untuk hasil terbaik, gunakan kalimat lengkap dan teks terstruktur dengan baik
