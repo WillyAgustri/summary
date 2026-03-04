@@ -182,12 +182,12 @@ def main():
     
     # Sidebar untuk konfigurasi
     st.sidebar.header("⚙️ Configuration")
-    MODEL_PATH
+    
     # Model path
     default_model_path = st.sidebar.text_input(
         "Model Path",
-        value="./models/indobart-v2-detik-final",
-        help="Path ke model fine-tuned IndoBART"
+        value=MODEL_PATH,
+        help="Path ke model fine-tuned IndoBART atau HuggingFace Hub model"
     )
     
     # Load model button
