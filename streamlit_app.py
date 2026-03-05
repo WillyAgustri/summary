@@ -132,225 +132,241 @@ st.set_page_config(
 # ============================================================
 st.markdown("""
 <style>
-    /* Import Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    /* Bootstrap 5 Standard Styling */
     
-    /* Main App Styling - Clean Light Theme */
+    /* Main App Styling - Bootstrap bg-light */
     .stApp {
-        background: #f8fafc;
+        background: #f8f9fa;
     }
     
     /* Main content area */
     .main .block-container {
         padding-top: 2rem;
         padding-bottom: 3rem;
-        max-width: 1200px;
+        max-width: 1140px;
     }
     
-    /* Typography - Better Readability */
+    /* Typography - Bootstrap Standard */
     * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
     }
     
     h1, h2, h3, h4, h5, h6 {
-        color: #1e293b !important;
-        font-weight: 600 !important;
+        color: #212529 !important;
+        font-weight: 500 !important;
+        line-height: 1.2 !important;
     }
     
     p, div, label, span, li {
-        color: #475569 !important;
-        line-height: 1.7 !important;
+        color: #212529 !important;
+        line-height: 1.5 !important;
     }
     
-    /* Title styling - Bootstrap inspired */
+    /* Title styling - Bootstrap display */
     h1 {
-        color: #0f172a !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
         font-size: 2.5rem !important;
         margin-bottom: 0.5rem !important;
-        letter-spacing: -0.02em !important;
     }
     
-    /* Tabs styling - Clean Tailwind style */
+    /* Tabs styling - Bootstrap nav-tabs */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
-        background-color: #f1f5f9;
-        padding: 4px;
-        border-radius: 10px;
-        margin-bottom: 2rem;
+        gap: 0;
+        background-color: transparent;
+        padding: 0;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 1rem;
     }
     
     .stTabs [data-baseweb="tab"] {
-        height: 48px;
+        height: auto;
         background-color: transparent;
-        border-radius: 8px;
-        color: #64748b;
-        font-weight: 500;
-        font-size: 0.95rem;
-        padding: 0 20px;
-        border: none;
-        transition: all 0.2s ease;
+        border-radius: 0;
+        color: #0d6efd;
+        font-weight: 400;
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid transparent;
+        border-bottom: 0;
+        transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
     }
     
     .stTabs [data-baseweb="tab"]:hover {
-        background-color: #e2e8f0;
-        color: #334155;
+        border-color: #e9ecef #e9ecef #dee2e6;
+        isolation: isolate;
     }
     
     .stTabs [aria-selected="true"] {
-        background-color: #ffffff !important;
-        color: #0f172a !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
-        font-weight: 600 !important;
+        background-color: #fff;
+        color: #495057;
+        border-color: #dee2e6 #dee2e6 #fff;
+        border-top-left-radius: 0.25rem;
+        border-top-right-radius: 0.25rem;
     }
     
-    /* Input fields - Clean and readable */
+    /* Input fields - Bootstrap form-control */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
-        border-radius: 8px !important;
-        border: 1.5px solid #cbd5e1 !important;
-        padding: 10px 14px !important;
-        font-size: 0.95rem !important;
-        transition: all 0.2s ease !important;
-        background-color: #ffffff !important;
-        color: #1e293b !important;
+        border-radius: 0.375rem !important;
+        border: 1px solid #ced4da !important;
+        padding: 0.375rem 0.75rem !important;
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+        background-color: #fff !important;
+        color: #212529 !important;
     }
     
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-        outline: none !important;
+        border-color: #86b7fe !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+        outline: 0 !important;
     }
     
-    /* Input labels */
-    .stTextInput > label, .stTextArea > label {
-        color: #334155 !important;
+    /* Input labels - Bootstrap form-label */
+    .stTextInput > label, .stTextArea > label, .stSelectbox > label {
+        color: #212529 !important;
         font-weight: 500 !important;
-        font-size: 0.9rem !important;
+        font-size: 1rem !important;
         margin-bottom: 0.5rem !important;
     }
     
-    /* Buttons - Bootstrap primary style */
+    /* Buttons - Bootstrap btn-primary */
     .stButton > button {
-        border-radius: 8px !important;
-        padding: 10px 24px !important;
-        font-weight: 500 !important;
-        font-size: 0.95rem !important;
-        border: none !important;
-        transition: all 0.2s ease !important;
-        height: 44px !important;
+        border-radius: 0.375rem !important;
+        padding: 0.375rem 0.75rem !important;
+        font-weight: 400 !important;
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+        border: 1px solid transparent !important;
+        transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
     }
     
     .stButton > button[kind="primary"] {
-        background-color: #3b82f6 !important;
-        color: white !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        background-color: #0d6efd !important;
+        color: #fff !important;
+        border-color: #0d6efd !important;
     }
     
     .stButton > button[kind="primary"]:hover {
-        background-color: #2563eb !important;
-        box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25) !important;
-        transform: translateY(-1px) !important;
+        background-color: #0b5ed7 !important;
+        border-color: #0a58ca !important;
     }
     
     .stButton > button[kind="secondary"] {
-        background-color: #e2e8f0 !important;
-        color: #334155 !important;
+        background-color: #6c757d !important;
+        color: #fff !important;
+        border-color: #6c757d !important;
     }
     
     .stButton > button[kind="secondary"]:hover {
-        background-color: #cbd5e1 !important;
+        background-color: #5c636a !important;
+        border-color: #565e64 !important;
     }
     
-    /* Alert boxes - Clear and visible */
+    /* Alert boxes - Bootstrap alerts */
     .stAlert {
-        border-radius: 10px !important;
-        border-left: 4px solid !important;
-        padding: 12px 16px !important;
-        background-color: #ffffff !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+        border-radius: 0.375rem !important;
+        border: 1px solid transparent !important;
+        padding: 1rem 1rem !important;
+        margin-bottom: 1rem !important;
     }
     
-    /* Success alert */
+    /* Success alert - Bootstrap alert-success */
     div[data-baseweb="notification"][kind="success"] {
-        background-color: #f0fdf4 !important;
-        border-left-color: #22c55e !important;
+        background-color: #d1e7dd !important;
+        border-color: #badbcc !important;
+        color: #0f5132 !important;
     }
     
-    /* Info alert */
+    /* Info alert - Bootstrap alert-info */
     div[data-baseweb="notification"][kind="info"] {
-        background-color: #eff6ff !important;
-        border-left-color: #3b82f6 !important;
+        background-color: #cff4fc !important;
+        border-color: #b6effb !important;
+        color: #055160 !important;
     }
     
-    /* Warning alert */
+    /* Warning alert - Bootstrap alert-warning */
     div[data-baseweb="notification"][kind="warning"] {
-        background-color: #fffbeb !important;
-        border-left-color: #f59e0b !important;
+        background-color: #fff3cd !important;
+        border-color: #ffecb5 !important;
+        color: #664d03 !important;
     }
     
-    /* Error alert */
+    /* Error alert - Bootstrap alert-danger */
     div[data-baseweb="notification"][kind="error"] {
-        background-color: #fef2f2 !important;
-        border-left-color: #ef4444 !important;
+        background-color: #f8d7da !important;
+        border-color: #f5c2c7 !important;
+        color: #842029 !important;
     }
     
-    /* Metrics - Clean numbers */
+    /* Metrics - Bootstrap headings */
     [data-testid="stMetricValue"] {
         font-size: 2rem !important;
         font-weight: 700 !important;
-        color: #0f172a !important;
+        color: #212529 !important;
     }
     
     [data-testid="stMetricLabel"] {
-        font-weight: 500 !important;
-        color: #64748b !important;
+        font-weight: 400 !important;
+        color: #6c757d !important;
         font-size: 0.875rem !important;
         text-transform: uppercase !important;
         letter-spacing: 0.05em !important;
     }
     
-    /* Checkbox - Cleaner style */
+    /* Checkbox - Bootstrap form-check */
     .stCheckbox {
-        padding: 8px 0;
+        padding: 0.5rem 0;
     }
     
     .stCheckbox > label {
-        font-weight: 500 !important;
-        font-size: 0.95rem !important;
-        color: #334155 !important;
+        font-weight: 400 !important;
+        font-size: 1rem !important;
+        color: #212529 !important;
     }
     
-    /* Radio buttons */
+    .stCheckbox > label > div {
+        background-color: #fff !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25em !important;
+    }
+    
+    .stCheckbox > label > div[data-checked="true"] {
+        background-color: #0d6efd !important;
+        border-color: #0d6efd !important;
+    }
+    
+    /* Radio buttons - Bootstrap form-check */
     .stRadio > label {
-        font-weight: 600 !important;
+        font-weight: 500 !important;
         font-size: 1rem !important;
-        color: #1e293b !important;
-        margin-bottom: 12px !important;
+        color: #212529 !important;
+        margin-bottom: 0.5rem !important;
     }
     
     .stRadio [role="radiogroup"] label {
-        background-color: #ffffff !important;
-        border: 1.5px solid #e2e8f0 !important;
-        border-radius: 8px !important;
-        padding: 10px 16px !important;
-        margin-right: 8px !important;
-        transition: all 0.2s ease !important;
+        background-color: #fff !important;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 0.375rem !important;
+        padding: 0.5rem 1rem !important;
+        margin-right: 0.5rem !important;
+        transition: all 0.15s ease-in-out !important;
     }
     
     .stRadio [role="radiogroup"] label:hover {
-        border-color: #cbd5e1 !important;
-        background-color: #f8fafc !important;
+        border-color: #0d6efd !important;
+        background-color: #f8f9fa !important;
     }
     
-    /* Slider - Blue theme */
+    /* Slider - Bootstrap primary color */
     .stSlider [role="slider"] {
-        background-color: #3b82f6 !important;
+        background-color: #0d6efd !important;
     }
     
     .stSlider [data-baseweb="slider"] > div > div {
-        background-color: #cbd5e1 !important;
+        background-color: #dee2e6 !important;
     }
     
     /* File uploader */
@@ -398,126 +414,133 @@ st.markdown("""
     }
     
     /* Custom card styling - Bootstrap card inspired */
+    /* Bootstrap card */
     .card {
         background: white;
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        margin: 16px 0;
-        border: 1px solid #e2e8f0;
-        transition: all 0.2s ease;
+        border-radius: 6px;
+        padding: 1.25rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin: 1rem 0;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        transition: box-shadow 0.15s ease-in-out;
     }
     
     .card:hover {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
     
     .card-title {
         font-size: 1.25rem;
-        font-weight: 600;
-        color: #0f172a;
-        margin-bottom: 12px;
+        font-weight: 500;
+        color: #212529;
+        margin-bottom: 0.75rem;
     }
     
     .card-text {
-        color: #475569;
-        line-height: 1.6;
+        color: #212529;
+        line-height: 1.5;
         margin: 0;
     }
     
-    /* Badge/Tag style */
+    /* Bootstrap badge */
     .badge {
         display: inline-block;
-        padding: 4px 12px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 500;
+        padding: 0.35em 0.65em;
+        border-radius: 0.25rem;
+        font-size: 0.875em;
+        font-weight: 700;
         margin-right: 8px;
+        line-height: 1;
     }
     
     .badge-blue {
-        background-color: #dbeafe;
-        color: #1e40af;
+        background-color: #0d6efd;
+        color: white;
     }
     
     .badge-green {
-        background-color: #dcfce7;
-        color: #166534;
+        background-color: #198754;
+        color: white;
     }
     
     .badge-purple {
-        background-color: #f3e8ff;
-        color: #6b21a8;
+        background-color: #6f42c1;
+        color: white;
     }
     
-    /* Section divider */
+    /* Bootstrap hr */
     hr {
-        margin: 2rem 0;
-        border: none;
-        height: 1px;
-        background-color: #e2e8f0;
+        margin: 1rem 0;
+        border: 0;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        opacity: 0.25;
     }
     
-    /* Info box with icon */
+    /* Info box - Bootstrap alert-info style */
     .info-box {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border-left: 4px solid #3b82f6;
-        border-radius: 10px;
+        background-color: #cff4fc;
+        border: 1px solid #9eeaf9;
+        border-left: 4px solid #0dcaf0;
+        border-radius: 8px;
         padding: 16px 20px;
         margin: 16px 0;
     }
     
     .info-box p {
         margin: 0;
-        color: #1e40af !important;
-        font-weight: 500;
+        color: #055160 !important;
+        font-weight: 400;
     }
     
-    /* Success box */
+    .info-box h4, .info-box h5 {
+        color: #055160 !important;
+    }
+    
+    /* Success box - Bootstrap alert-success style */
     .success-box {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        border-left: 4px solid #22c55e;
-        border-radius: 10px;
+        background-color: #d1e7dd;
+        border: 1px solid #a3cfbb;
+        border-left: 4px solid #198754;
+        border-radius: 8px;
         padding: 16px 20px;
         margin: 16px 0;
     }
     
     .success-box p {
         margin: 0;
-        color: #166534 !important;
-        font-weight: 500;
+        color: #0a3622 !important;
+        font-weight: 400;
     }
     
-    /* Result card with border */
+    /* Result card - Bootstrap card variant */
     .result-card {
         background: white;
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 20px;
-        margin: 12px 0;
-        transition: all 0.2s ease;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-radius: 6px;
+        padding: 1.25rem;
+        margin: 0.75rem 0;
+        transition: box-shadow 0.15s ease-in-out;
     }
     
     .result-card:hover {
-        border-color: #cbd5e1;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
     
-    /* Caption/helper text */
+    /* Bootstrap text-muted */
     .helper-text {
-        color: #64748b !important;
+        color: #6c757d !important;
         font-size: 0.875rem !important;
-        margin-top: 4px !important;
+        margin-top: 0.25rem !important;
     }
     
-    /* Section header with underline */
+    /* Bootstrap section heading */
     .section-title {
         font-size: 1.5rem;
-        font-weight: 600;
-        color: #0f172a;
-        padding-bottom: 12px;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #e2e8f0;
+        font-weight: 500;
+        color: #212529;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
     }
     
     /* Improved spacing */
@@ -525,27 +548,25 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
-    /* Link styling */
+    /* Bootstrap link */
     a {
-        color: #3b82f6 !important;
-        text-decoration: none !important;
-        font-weight: 500 !important;
-        transition: color 0.2s ease !important;
+        color: #0d6efd !important;
+        text-decoration: underline !important;
+        transition: color 0.15s ease-in-out !important;
     }
     
     a:hover {
-        color: #2563eb !important;
-        text-decoration: underline !important;
+        color: #0a58ca !important;
     }
     
-    /* Code blocks */
+    /* Bootstrap code */
     code {
-        background-color: #f1f5f9 !important;
-        color: #e11d48 !important;
-        padding: 2px 6px !important;
-        border-radius: 4px !important;
-        font-size: 0.9em !important;
-        font-family: 'Courier New', monospace !important;
+        background-color: #f8f9fa !important;
+        color: #d63384 !important;
+        padding: 0.2rem 0.4rem !important;
+        border-radius: 0.25rem !important;
+        font-size: 87.5% !important;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
     }
 </style>
 """, unsafe_allow_html=True)
