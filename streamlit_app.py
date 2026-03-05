@@ -1188,16 +1188,49 @@ def main():
     # Tab 2: Batch Processing
     with tab2:
         st.markdown("<div class='section-title'>📊 Batch Processing</div>", unsafe_allow_html=True)
-        st.markdown("""<div class='info-box'>
-        <p style='margin-bottom: 12px;'><strong>Upload a CSV file to summarize multiple texts at once.</strong></p>
         
-        <p style='margin-bottom: 8px;'><strong>Supported column formats:</strong></p>
-        <ul style='margin-left: 20px; margin-bottom: 0;'>
-        <li><strong>Text</strong>: <code>text</code>, <code>Isi Berita</code> (required)</li>
-        <li><strong>Title</strong>: <code>title</code>, <code>Judul</code> (optional)</li>
-        <li><strong>Date</strong>: <code>date</code>, <code>Tanggal</code> (optional)</li>
-        <li><strong>URL</strong>: <code>url</code>, <code>URL</code> (optional)</li>
-        </ul>
+        st.markdown("""
+        <div class='info-box'>
+            <h4 style='color: #0f172a; margin-bottom: 16px; font-size: 1.1rem;'>📤 Upload CSV File</h4>
+            <p style='color: #475569; margin-bottom: 16px; line-height: 1.6;'>
+                Upload a CSV file to summarize multiple texts at once. 
+                The system will automatically detect column names.
+            </p>
+            
+            <h5 style='color: #0f172a; margin-bottom: 12px; font-size: 1rem;'>📋 Supported Column Formats:</h5>
+            <div style='background: #ffffff; padding: 16px; border-radius: 8px; border-left: 3px solid #3b82f6;'>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr style='border-bottom: 1px solid #e2e8f0;'>
+                        <td style='padding: 10px; color: #0f172a; font-weight: 600;'>Column Type</td>
+                        <td style='padding: 10px; color: #0f172a; font-weight: 600;'>Accepted Names</td>
+                        <td style='padding: 10px; color: #0f172a; font-weight: 600;'>Status</td>
+                    </tr>
+                    <tr style='border-bottom: 1px solid #f1f5f9;'>
+                        <td style='padding: 10px; color: #475569;'><strong>Text</strong></td>
+                        <td style='padding: 10px;'><code style='background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a;'>text</code>, <code style='background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a;'>Isi Berita</code></td>
+                        <td style='padding: 10px;'><span style='background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;'>REQUIRED</span></td>
+                    </tr>
+                    <tr style='border-bottom: 1px solid #f1f5f9;'>
+                        <td style='padding: 10px; color: #475569;'><strong>Title</strong></td>
+                        <td style='padding: 10px;'><code style='background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a;'>title</code>, <code style='background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a;'>Judul</code></td>
+                        <td style='padding: 10px;'><span style='background: #e0e7ff; color: #4f46e5; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;'>OPTIONAL</span></td>
+                    </tr>
+                    <tr style='border-bottom: 1px solid #f1f5f9;'>
+                        <td style='padding: 10px; color: #475569;'><strong>Date</strong></td>
+                        <td style='padding: 10px;'><code style='background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a;'>date</code>, <code style='background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a;'>Tanggal</code></td>
+                        <td style='padding: 10px;'><span style='background: #e0e7ff; color: #4f46e5; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;'>OPTIONAL</span></td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 10px; color: #475569;'><strong>URL</strong></td>
+                        <td style='padding: 10px;'><code style='background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a;'>url</code>, <code style='background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a;'>URL</code></td>
+                        <td style='padding: 10px;'><span style='background: #e0e7ff; color: #4f46e5; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;'>OPTIONAL</span></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <p style='color: #64748b; margin-top: 12px; font-size: 0.9rem; margin-bottom: 0;'>
+                💡 <em>Column names are case-insensitive. The system will automatically detect and map them.</em>
+            </p>
         </div>
         """, unsafe_allow_html=True)
         
