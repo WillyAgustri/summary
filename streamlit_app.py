@@ -133,272 +133,419 @@ st.set_page_config(
 st.markdown("""
 <style>
     /* Import Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    /* Main App Styling */
+    /* Main App Styling - Clean Light Theme */
     .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #f8fafc;
     }
     
     /* Main content area */
     .main .block-container {
         padding-top: 2rem;
-        padding-bottom: 2rem;
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        backdrop-filter: blur(10px);
+        padding-bottom: 3rem;
+        max-width: 1200px;
     }
     
-    /* Typography */
-    h1, h2, h3, h4, h5, h6, p, div, label, span {
-        font-family: 'Inter', sans-serif !important;
+    /* Typography - Better Readability */
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     }
     
-    /* Title styling */
+    h1, h2, h3, h4, h5, h6 {
+        color: #1e293b !important;
+        font-weight: 600 !important;
+    }
+    
+    p, div, label, span, li {
+        color: #475569 !important;
+        line-height: 1.7 !important;
+    }
+    
+    /* Title styling - Bootstrap inspired */
     h1 {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #0f172a !important;
         font-weight: 700 !important;
-        font-size: 3rem !important;
+        font-size: 2.5rem !important;
         margin-bottom: 0.5rem !important;
+        letter-spacing: -0.02em !important;
     }
     
-    /* Subtitle styling */
-    .subtitle {
-        color: #6b7280;
-        font-size: 1.1rem;
+    /* Tabs styling - Clean Tailwind style */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 4px;
+        background-color: #f1f5f9;
+        padding: 4px;
+        border-radius: 10px;
         margin-bottom: 2rem;
     }
     
-    /* Info boxes */
-    .stMarkdown p {
-        font-size: 1rem;
-        line-height: 1.6;
-    }
-    
-    /* Tabs styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: #f3f4f6;
-        padding: 8px;
-        border-radius: 12px;
-    }
-    
     .stTabs [data-baseweb="tab"] {
-        height: 50px;
+        height: 48px;
         background-color: transparent;
         border-radius: 8px;
-        color: #6b7280;
-        font-weight: 600;
-        font-size: 1rem;
-        padding: 0 24px;
+        color: #64748b;
+        font-weight: 500;
+        font-size: 0.95rem;
+        padding: 0 20px;
         border: none;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: #e2e8f0;
+        color: #334155;
     }
     
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        color: white !important;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+        font-weight: 600 !important;
     }
     
-    /* Input fields */
+    /* Input fields - Clean and readable */
     .stTextInput > div > div > input,
     .stTextArea > div > div > textarea {
-        border-radius: 12px !important;
-        border: 2px solid #e5e7eb !important;
-        padding: 12px 16px !important;
-        font-size: 1rem !important;
-        transition: all 0.3s ease !important;
+        border-radius: 8px !important;
+        border: 1.5px solid #cbd5e1 !important;
+        padding: 10px 14px !important;
+        font-size: 0.95rem !important;
+        transition: all 0.2s ease !important;
         background-color: #ffffff !important;
+        color: #1e293b !important;
     }
     
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        outline: none !important;
     }
     
-    /* Buttons */
+    /* Input labels */
+    .stTextInput > label, .stTextArea > label {
+        color: #334155 !important;
+        font-weight: 500 !important;
+        font-size: 0.9rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Buttons - Bootstrap primary style */
     .stButton > button {
-        border-radius: 12px !important;
-        padding: 12px 32px !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
+        border-radius: 8px !important;
+        padding: 10px 24px !important;
+        font-weight: 500 !important;
+        font-size: 0.95rem !important;
         border: none !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        transition: all 0.2s ease !important;
+        height: 44px !important;
     }
     
     .stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-color: #3b82f6 !important;
         color: white !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }
     
     .stButton > button[kind="primary"]:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+        background-color: #2563eb !important;
+        box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25) !important;
+        transform: translateY(-1px) !important;
     }
     
-    /* Info/Success/Warning boxes */
+    .stButton > button[kind="secondary"] {
+        background-color: #e2e8f0 !important;
+        color: #334155 !important;
+    }
+    
+    .stButton > button[kind="secondary"]:hover {
+        background-color: #cbd5e1 !important;
+    }
+    
+    /* Alert boxes - Clear and visible */
     .stAlert {
-        border-radius: 12px !important;
-        border: none !important;
-        padding: 16px 20px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        border-radius: 10px !important;
+        border-left: 4px solid !important;
+        padding: 12px 16px !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
     }
     
-    div[data-testid="stMarkdownContainer"] > div[data-testid="stMarkdown"] > div > p {
-        font-size: 1rem;
+    /* Success alert */
+    div[data-baseweb="notification"][kind="success"] {
+        background-color: #f0fdf4 !important;
+        border-left-color: #22c55e !important;
     }
     
-    /* Metrics */
+    /* Info alert */
+    div[data-baseweb="notification"][kind="info"] {
+        background-color: #eff6ff !important;
+        border-left-color: #3b82f6 !important;
+    }
+    
+    /* Warning alert */
+    div[data-baseweb="notification"][kind="warning"] {
+        background-color: #fffbeb !important;
+        border-left-color: #f59e0b !important;
+    }
+    
+    /* Error alert */
+    div[data-baseweb="notification"][kind="error"] {
+        background-color: #fef2f2 !important;
+        border-left-color: #ef4444 !important;
+    }
+    
+    /* Metrics - Clean numbers */
     [data-testid="stMetricValue"] {
         font-size: 2rem !important;
         font-weight: 700 !important;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #0f172a !important;
     }
     
     [data-testid="stMetricLabel"] {
-        font-weight: 600 !important;
-        color: #6b7280 !important;
-        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        color: #64748b !important;
+        font-size: 0.875rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
     }
     
-    /* Checkbox */
+    /* Checkbox - Cleaner style */
     .stCheckbox {
         padding: 8px 0;
     }
     
     .stCheckbox > label {
         font-weight: 500 !important;
-        font-size: 1rem !important;
-        color: #374151 !important;
+        font-size: 0.95rem !important;
+        color: #334155 !important;
     }
     
     /* Radio buttons */
     .stRadio > label {
         font-weight: 600 !important;
-        font-size: 1.1rem !important;
-        color: #374151 !important;
+        font-size: 1rem !important;
+        color: #1e293b !important;
         margin-bottom: 12px !important;
     }
     
-    /* Slider */
-    .stSlider > div > div > div {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    .stRadio [role="radiogroup"] label {
+        background-color: #ffffff !important;
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        padding: 10px 16px !important;
+        margin-right: 8px !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .stRadio [role="radiogroup"] label:hover {
+        border-color: #cbd5e1 !important;
+        background-color: #f8fafc !important;
+    }
+    
+    /* Slider - Blue theme */
+    .stSlider [role="slider"] {
+        background-color: #3b82f6 !important;
+    }
+    
+    .stSlider [data-baseweb="slider"] > div > div {
+        background-color: #cbd5e1 !important;
     }
     
     /* File uploader */
     [data-testid="stFileUploader"] {
-        border-radius: 12px !important;
-        border: 2px dashed #667eea !important;
-        padding: 24px !important;
-        background-color: #f9fafb !important;
-        transition: all 0.3s ease !important;
+        border-radius: 10px !important;
+        border: 2px dashed #cbd5e1 !important;
+        padding: 32px 24px !important;
+        background-color: #ffffff !important;
+        transition: all 0.2s ease !important;
     }
     
     [data-testid="stFileUploader"]:hover {
-        border-color: #764ba2 !important;
-        background-color: #f3f4f6 !important;
+        border-color: #3b82f6 !important;
+        background-color: #f8fafc !important;
     }
     
     /* Progress bar */
     .stProgress > div > div > div > div {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background-color: #3b82f6 !important;
+        border-radius: 10px !important;
     }
     
-    /* Sidebar */
+    /* Sidebar - Clean white */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%) !important;
+        background-color: #ffffff !important;
+        border-right: 1px solid #e2e8f0 !important;
     }
     
-    [data-testid="stSidebar"] * {
-        color: white !important;
+    [data-testid="stSidebar"] .stMarkdown h2,
+    [data-testid="stSidebar"] .stMarkdown h3 {
+        color: #0f172a !important;
     }
     
-    [data-testid="stSidebar"] .stMarkdown {
-        color: white !important;
+    [data-testid="stSidebar"] .stMarkdown p,
+    [data-testid="stSidebar"] .stMarkdown div {
+        color: #475569 !important;
     }
     
-    [data-testid="stSidebar"] h2 {
-        color: white !important;
-        -webkit-text-fill-color: white !important;
-    }
-    
-    /* Dataframe */
+    /* Dataframe - Clean table */
     .stDataFrame {
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         overflow: hidden !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e2e8f0 !important;
     }
     
-    /* Custom card styling */
-    .custom-card {
+    /* Custom card styling - Bootstrap card inspired */
+    .card {
         background: white;
-        border-radius: 16px;
+        border-radius: 12px;
         padding: 24px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         margin: 16px 0;
-        border: 1px solid #e5e7eb;
-        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
     }
     
-    .custom-card:hover {
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        transform: translateY(-2px);
+    .card:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
-    /* Success box with gradient */
-    .success-gradient {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        padding: 16px 20px;
-        border-radius: 12px;
-        margin: 16px 0;
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 12px;
+    }
+    
+    .card-text {
+        color: #475569;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    /* Badge/Tag style */
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
         font-weight: 500;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        margin-right: 8px;
     }
     
-    /* Info box with gradient */
-    .info-gradient {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
-        padding: 16px 20px;
-        border-radius: 12px;
-        margin: 16px 0;
-        font-weight: 500;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    .badge-blue {
+        background-color: #dbeafe;
+        color: #1e40af;
     }
     
-    /* Section headers */
-    .section-header {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-top: 2rem;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 3px solid;
-        border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
+    .badge-green {
+        background-color: #dcfce7;
+        color: #166534;
     }
     
-    /* Divider */
+    .badge-purple {
+        background-color: #f3e8ff;
+        color: #6b21a8;
+    }
+    
+    /* Section divider */
     hr {
         margin: 2rem 0;
         border: none;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #667eea, #764ba2, transparent);
+        height: 1px;
+        background-color: #e2e8f0;
     }
     
-    /* Caption text */
-    .stCaption {
-        color: #9ca3af !important;
-        font-size: 0.9rem !important;
+    /* Info box with icon */
+    .info-box {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-left: 4px solid #3b82f6;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin: 16px 0;
+    }
+    
+    .info-box p {
+        margin: 0;
+        color: #1e40af !important;
+        font-weight: 500;
+    }
+    
+    /* Success box */
+    .success-box {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-left: 4px solid #22c55e;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin: 16px 0;
+    }
+    
+    .success-box p {
+        margin: 0;
+        color: #166534 !important;
+        font-weight: 500;
+    }
+    
+    /* Result card with border */
+    .result-card {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 12px 0;
+        transition: all 0.2s ease;
+    }
+    
+    .result-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Caption/helper text */
+    .helper-text {
+        color: #64748b !important;
+        font-size: 0.875rem !important;
+        margin-top: 4px !important;
+    }
+    
+    /* Section header with underline */
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #0f172a;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    /* Improved spacing */
+    .stMarkdown {
+        margin-bottom: 1rem;
+    }
+    
+    /* Link styling */
+    a {
+        color: #3b82f6 !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+        transition: color 0.2s ease !important;
+    }
+    
+    a:hover {
+        color: #2563eb !important;
+        text-decoration: underline !important;
+    }
+    
+    /* Code blocks */
+    code {
+        background-color: #f1f5f9 !important;
+        color: #e11d48 !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        font-size: 0.9em !important;
+        font-family: 'Courier New', monospace !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -675,16 +822,17 @@ def translate_long_text(text: str, model, tokenizer, device="cpu", max_length: i
 # ============================================================
 
 def main():
-    st.markdown("<h1 style='text-align: center;'>📝 Indonesian Text Summarizer</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #6b7280; font-size: 1.1rem; margin-bottom: 2rem;'>AI-Powered Summarization with IndoBART-v2 & Translation</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #0f172a;'>📝 Indonesian Text Summarizer</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #64748b; font-size: 1.1rem; margin-bottom: 1.5rem;'>AI-Powered Summarization with IndoBART-v2 & Translation</p>", unsafe_allow_html=True)
     
     # Feature highlight banner
     st.markdown("""
-    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 16px; margin-bottom: 24px; color: white; text-align: center;'>
-        <h3 style='margin: 0 0 12px 0; color: white;'>✨ Features</h3>
-        <p style='margin: 0; font-size: 0.95rem;'>
-            🎯 Abstractive & Extractive Summaries • 🌐 English Translation • 
-            📊 Batch Processing • 🔗 URL Extraction
+    <div class="info-box" style="text-align: center; margin-bottom: 2rem;">
+        <p style="margin: 0; font-size: 0.95rem;">
+            <span class="badge badge-blue">🎯 Abstractive & Extractive</span>
+            <span class="badge badge-green">🌐 Translation</span>
+            <span class="badge badge-purple">📊 Batch Processing</span>
+            <span class="badge badge-blue">🔗 URL Extraction</span>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -693,30 +841,33 @@ def main():
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
-        <div class="custom-card" style="text-align: center;">
-            <h3 style="color: #667eea; margin-bottom: 8px;">🤖 Model</h3>
-            <p style="color: #6b7280; margin: 0;">IndoBART-v2</p>
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 8px;">🤖</div>
+            <div class="card-title" style="font-size: 1rem; margin-bottom: 4px;">Model</div>
+            <p class="card-text" style="font-size: 0.9rem; margin: 0;">IndoBART-v2</p>
         </div>
         """, unsafe_allow_html=True)
     with col2:
         st.markdown("""
-        <div class="custom-card" style="text-align: center;">
-            <h3 style="color: #667eea; margin-bottom: 8px;">⚡ Fine-tuned</h3>
-            <p style="color: #6b7280; margin: 0;">LoRA/PEFT</p>
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 8px;">⚡</div>
+            <div class="card-title" style="font-size: 1rem; margin-bottom: 4px;">Fine-tuned</div>
+            <p class="card-text" style="font-size: 0.9rem; margin: 0;">LoRA/PEFT</p>
         </div>
         """, unsafe_allow_html=True)
     with col3:
         st.markdown("""
-        <div class="custom-card" style="text-align: center;">
-            <h3 style="color: #667eea; margin-bottom: 8px;">🌐 Translation</h3>
-            <p style="color: #6b7280; margin: 0;">Helsinki-NLP</p>
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 8px;">🌐</div>
+            <div class="card-title" style="font-size: 1rem; margin-bottom: 4px;">Translation</div>
+            <p class="card-text" style="font-size: 0.9rem; margin: 0;">Helsinki-NLP</p>
         </div>
         """, unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
     # Sidebar for configuration
-    st.sidebar.markdown("<h2 style='text-align: center; margin-bottom: 1.5rem;'>⚙️ Settings</h2>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h2 style='text-align: center; margin-bottom: 1.5rem; color: #0f172a;'>⚙️ Settings</h2>", unsafe_allow_html=True)
     
     # Load model automatically
     if 'model' not in st.session_state:
@@ -726,13 +877,13 @@ def main():
                 st.session_state['model'] = model
                 st.session_state['tokenizer'] = tokenizer
                 st.session_state['device'] = device
-                st.sidebar.markdown(f"<div class='success-gradient' style='text-align: center;'>✅ Model loaded on {device}</div>", unsafe_allow_html=True)
+                st.sidebar.markdown(f"<div class='success-box' style='text-align: center;'>✅ Model loaded on {device}</div>", unsafe_allow_html=True)
             else:
                 st.sidebar.error("❌ Failed to load model")
                 st.error("⚠️ Failed to load model. Please refresh the page.")
                 return
     else:
-        st.sidebar.markdown(f"<div class='success-gradient' style='text-align: center;'>✅ Model ready on {st.session_state['device']}</div>", unsafe_allow_html=True)
+        st.sidebar.markdown(f"<div class='success-box' style='text-align: center;'>✅ Model ready on {st.session_state['device']}</div>", unsafe_allow_html=True)
     
     # Load translation model (lazy loading)
     if 'translation_model' not in st.session_state:
@@ -741,7 +892,7 @@ def main():
         st.session_state['translation_loaded'] = False
     
     # Generation parameters
-    st.sidebar.markdown("<h3 style='margin-top: 2rem; margin-bottom: 1rem;'>🎛️ Generation Parameters</h3>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h3 style='margin-top: 2rem; margin-bottom: 1rem; color: #0f172a;'> 🎛️ Generation Parameters</h3>", unsafe_allow_html=True)
     num_sentences = st.sidebar.slider(
         "Number of Sentences", 
         min_value=1, max_value=10, 
@@ -769,7 +920,7 @@ def main():
     
     # Info model
     st.sidebar.markdown("---")
-    st.sidebar.markdown("<h3 style='margin-bottom: 1rem;'>📊 Model Info</h3>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h3 style='margin-bottom: 1rem; color: #0f172a;'>📊 Model Info</h3>", unsafe_allow_html=True)
     st.sidebar.markdown(f"**Source:** HuggingFace Hub")
     st.sidebar.markdown(f"**Model ID:** `{MODEL_NAME}`")
     st.sidebar.markdown(f"**Device:** `{st.session_state['device']}`")
@@ -779,7 +930,7 @@ def main():
     
     # Tab 1: Single Text Summarization
     with tab1:
-        st.markdown("<div class='section-header'>📄 Single Text Summarization</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>📄 Single Text Summarization</div>", unsafe_allow_html=True)
         
         # Pilihan input method
         input_method = st.radio(
@@ -972,55 +1123,55 @@ def main():
                                     translate_summary = False
                         
                         # Display metadata
-                        st.markdown("<div class='section-header'>📰 Informasi Berita</div>", unsafe_allow_html=True)
+                        st.markdown("<div class='section-title'>📰 Informasi Berita</div>", unsafe_allow_html=True)
                         
-                        info_html = "<div class='custom-card'>"
+                        info_html = "<div class='card'>"
                         if article_title:
                             info_html += f"<p><strong>📌 Judul:</strong> {article_title}</p>"
                         if article_date:
                             info_html += f"<p><strong>📅 Tanggal:</strong> {article_date}</p>"
                         if article_url:
-                            info_html += f"<p><strong>🔗 URL:</strong> <a href='{article_url}' target='_blank' style='color: #667eea;'>{article_url}</a></p>"
+                            info_html += f"<p><strong>🔗 URL:</strong> <a href='{article_url}' target='_blank' style='color: #3b82f6;'>{article_url}</a></p>"
                         info_html += "</div>"
                         st.markdown(info_html, unsafe_allow_html=True)
                         
-                        st.markdown("<div class='section-header'>📋 Hasil Ringkasan</div>", unsafe_allow_html=True)
+                        st.markdown("<div class='section-title'>📋 Hasil Ringkasan</div>", unsafe_allow_html=True)
                         
                         if translate_summary and st.session_state['translation_loaded']:
                             # Display side by side (Indonesian | English)
-                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>1️⃣ Ringkasan Abstraktif 1 Kalimat</h4>", unsafe_allow_html=True)
+                            st.markdown("<h4 style='color: #0f172a; margin-top: 1.5rem; font-size: 1.1rem;'>1️⃣ Ringkasan Abstraktif 1 Kalimat</h4>", unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #667eea; margin-bottom: 8px;'>🇮🇩 Indonesian</p><p style='margin: 0;'>" + summary_1s + "</p></div>", unsafe_allow_html=True)
+                                st.markdown("<div class='result-card' style='border-left: 3px solid #3b82f6;'><p style='margin: 0; font-weight: 600; color: #3b82f6; margin-bottom: 8px; font-size: 0.85rem;'>🇮🇩 INDONESIAN</p><p style='margin: 0; color: #1e293b;'>" + summary_1s + "</p></div>", unsafe_allow_html=True)
                             with col2:
-                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #10b981; margin-bottom: 8px;'>🇬🇧 English</p><p style='margin: 0;'>" + translated_1s + "</p></div>", unsafe_allow_html=True)
+                                st.markdown("<div class='result-card' style='border-left: 3px solid #22c55e;'><p style='margin: 0; font-weight: 600; color: #22c55e; margin-bottom: 8px; font-size: 0.85rem;'>🇬🇧 ENGLISH</p><p style='margin: 0; color: #1e293b;'>" + translated_1s + "</p></div>", unsafe_allow_html=True)
                             
-                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>3️⃣ Ringkasan Abstraktif 3 Kalimat</h4>", unsafe_allow_html=True)
+                            st.markdown("<h4 style='color: #0f172a; margin-top: 1.5rem; font-size: 1.1rem;'>3️⃣ Ringkasan Abstraktif 3 Kalimat</h4>", unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #667eea; margin-bottom: 8px;'>🇮🇩 Indonesian</p><p style='margin: 0;'>" + summary_3s + "</p></div>", unsafe_allow_html=True)
+                                st.markdown("<div class='result-card' style='border-left: 3px solid #3b82f6;'><p style='margin: 0; font-weight: 600; color: #3b82f6; margin-bottom: 8px; font-size: 0.85rem;'>🇮🇩 INDONESIAN</p><p style='margin: 0; color: #1e293b;'>" + summary_3s + "</p></div>", unsafe_allow_html=True)
                             with col2:
-                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #10b981; margin-bottom: 8px;'>🇬🇧 English</p><p style='margin: 0;'>" + translated_3s + "</p></div>", unsafe_allow_html=True)
+                                st.markdown("<div class='result-card' style='border-left: 3px solid #22c55e;'><p style='margin: 0; font-weight: 600; color: #22c55e; margin-bottom: 8px; font-size: 0.85rem;'>🇬🇧 ENGLISH</p><p style='margin: 0; color: #1e293b;'>" + translated_3s + "</p></div>", unsafe_allow_html=True)
                             
-                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>📝 Ringkasan Ekstraktif</h4>", unsafe_allow_html=True)
+                            st.markdown("<h4 style='color: #0f172a; margin-top: 1.5rem; font-size: 1.1rem;'>📝 Ringkasan Ekstraktif</h4>", unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #667eea; margin-bottom: 8px;'>🇮🇩 Indonesian</p><p style='margin: 0;'>" + summary_extractive + "</p></div>", unsafe_allow_html=True)
+                                st.markdown("<div class='result-card' style='border-left: 3px solid #3b82f6;'><p style='margin: 0; font-weight: 600; color: #3b82f6; margin-bottom: 8px; font-size: 0.85rem;'>🇮🇩 INDONESIAN</p><p style='margin: 0; color: #1e293b;'>" + summary_extractive + "</p></div>", unsafe_allow_html=True)
                             with col2:
-                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #10b981; margin-bottom: 8px;'>🇬🇧 English</p><p style='margin: 0;'>" + translated_ext + "</p></div>", unsafe_allow_html=True)
+                                st.markdown("<div class='result-card' style='border-left: 3px solid #22c55e;'><p style='margin: 0; font-weight: 600; color: #22c55e; margin-bottom: 8px; font-size: 0.85rem;'>🇬🇧 ENGLISH</p><p style='margin: 0; color: #1e293b;'>" + translated_ext + "</p></div>", unsafe_allow_html=True)
                         else:
                             # Display Indonesian only
-                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>1️⃣ Ringkasan Abstraktif 1 Kalimat</h4>", unsafe_allow_html=True)
-                            st.markdown("<div class='custom-card'><p style='margin: 0;'>" + summary_1s + "</p></div>", unsafe_allow_html=True)
+                            st.markdown("<h4 style='color: #0f172a; margin-top: 1.5rem; font-size: 1.1rem;'>1️⃣ Ringkasan Abstraktif 1 Kalimat</h4>", unsafe_allow_html=True)
+                            st.markdown("<div class='result-card'><p style='margin: 0; color: #1e293b;'>" + summary_1s + "</p></div>", unsafe_allow_html=True)
                             
-                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>3️⃣ Ringkasan Abstraktif 3 Kalimat</h4>", unsafe_allow_html=True)
-                            st.markdown("<div class='custom-card'><p style='margin: 0;'>" + summary_3s + "</p></div>", unsafe_allow_html=True)
+                            st.markdown("<h4 style='color: #0f172a; margin-top: 1.5rem; font-size: 1.1rem;'>3️⃣ Ringkasan Abstraktif 3 Kalimat</h4>", unsafe_allow_html=True)
+                            st.markdown("<div class='result-card'><p style='margin: 0; color: #1e293b;'>" + summary_3s + "</p></div>", unsafe_allow_html=True)
                             
-                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>📝 Ringkasan Ekstraktif</h4>", unsafe_allow_html=True)
-                            st.markdown("<div class='custom-card'><p style='margin: 0;'>" + summary_extractive + "</p></div>", unsafe_allow_html=True)
+                            st.markdown("<h4 style='color: #0f172a; margin-top: 1.5rem; font-size: 1.1rem;'>📝 Ringkasan Ekstraktif</h4>", unsafe_allow_html=True)
+                            st.markdown("<div class='result-card'><p style='margin: 0; color: #1e293b;'>" + summary_extractive + "</p></div>", unsafe_allow_html=True)
                         
                         # Statistics
-                        st.markdown("<div class='section-header'>📊 Statistics</div>", unsafe_allow_html=True)
+                        st.markdown("<div class='section-title'>📊 Statistics</div>", unsafe_allow_html=True)
                         col1, col2, col3, col4 = st.columns(4)
                         with col1:
                             st.metric("Original Words", len(text_input.split()))
@@ -1036,12 +1187,12 @@ def main():
     
     # Tab 2: Batch Processing
     with tab2:
-        st.markdown("<div class='section-header'>📊 Batch Processing</div>", unsafe_allow_html=True)
-        st.markdown("""<div class='custom-card'>
+        st.markdown("<div class='section-title'>📊 Batch Processing</div>", unsafe_allow_html=True)
+        st.markdown("""<div class='info-box'>
         <p style='margin-bottom: 12px;'><strong>Upload a CSV file to summarize multiple texts at once.</strong></p>
         
         <p style='margin-bottom: 8px;'><strong>Supported column formats:</strong></p>
-        <ul style='margin-left: 20px;'>
+        <ul style='margin-left: 20px; margin-bottom: 0;'>
         <li><strong>Text</strong>: <code>text</code>, <code>Isi Berita</code> (required)</li>
         <li><strong>Title</strong>: <code>title</code>, <code>Judul</code> (optional)</li>
         <li><strong>Date</strong>: <code>date</code>, <code>Tanggal</code> (optional)</li>
@@ -1254,8 +1405,8 @@ def main():
     
     # Tab 3: Translation (Indonesian → English)
     with tab3:
-        st.markdown("<div class='section-header'>🌐 Translation: Indonesian → English</div>", unsafe_allow_html=True)
-        st.markdown("<div class='info-gradient'>Translate text or summary from Indonesian to English using Helsinki-NLP model</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>🌐 Translation: Indonesian → English</div>", unsafe_allow_html=True)
+        st.markdown("<div class='info-box'><p style='margin: 0;'>Translate text or summary from Indonesian to English using Helsinki-NLP model</p></div>", unsafe_allow_html=True)
         
         # Load translation model on demand
         if not st.session_state['translation_loaded']:
@@ -1320,17 +1471,17 @@ def main():
                             st.success("✅ Translation completed!")
                             
                             # Display results side by side
-                            st.markdown("<div class='section-header'>📋 Translation Results</div>", unsafe_allow_html=True)
+                            st.markdown("<div class='section-title'>📋 Translation Results</div>", unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.markdown("<h4 style='color: #667eea;'>🇮🇩 Indonesian</h4>", unsafe_allow_html=True)
-                                st.markdown(f"<div class='custom-card'><p style='margin: 0;'>{translation_input}</p></div>", unsafe_allow_html=True)
+                                st.markdown("<h4 style='color: #0f172a; font-size: 1rem; margin-bottom: 8px;'>🇮🇩 Indonesian</h4>", unsafe_allow_html=True)
+                                st.markdown(f"<div class='result-card' style='border-left: 3px solid #3b82f6;'><p style='margin: 0; color: #1e293b;'>{translation_input}</p></div>", unsafe_allow_html=True)
                             with col2:
-                                st.markdown("<h4 style='color: #10b981;'>🇬🇧 English</h4>", unsafe_allow_html=True)
-                                st.markdown(f"<div class='custom-card' style='border-left: 4px solid #10b981;'><p style='margin: 0;'>{translated}</p></div>", unsafe_allow_html=True)
+                                st.markdown("<h4 style='color: #0f172a; font-size: 1rem; margin-bottom: 8px;'>🇬🇧 English</h4>", unsafe_allow_html=True)
+                                st.markdown(f"<div class='result-card' style='border-left: 3px solid #22c55e;'><p style='margin: 0; color: #1e293b;'>{translated}</p></div>", unsafe_allow_html=True)
                             
                             # Statistics
-                            st.markdown("<div class='section-header'>📊 Statistics</div>", unsafe_allow_html=True)
+                            st.markdown("<div class='section-title'>📊 Statistics</div>", unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                             with col1:
                                 st.metric("Indonesian Words", len(translation_input.split()))
@@ -1343,8 +1494,8 @@ def main():
             # Quick tip
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("""
-            <div class='info-gradient'>
-            <h4 style='margin: 0 0 12px 0; color: white;'>💡 Tips:</h4>
+            <div class='info-box'>
+            <p style='margin: 0 0 8px 0; font-weight: 600; color: #1e40af;'>💡 Tips:</p>
             <ul style='margin: 0; padding-left: 20px;'>
                 <li>This model is lightweight (~300MB) and accurate for news text</li>
                 <li>Best for: news articles, summaries, formal text</li>
@@ -1356,21 +1507,21 @@ def main():
     
     # Tab 4: About
     with tab4:
-        st.markdown("<div class='section-header'>ℹ️ About This App</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>ℹ️ About This App</div>", unsafe_allow_html=True)
         
         st.markdown("""
-        <div class='custom-card'>
-        <h3 style='color: #667eea; margin-bottom: 16px;'>📖 Overview</h3>
-        <p>This application uses <strong>IndoBART-v2</strong> that has been <strong>fine-tuned</strong> with the 
+        <div class='card'>
+        <h3 style='color: #0f172a; margin-bottom: 16px; font-size: 1.25rem;'>📖 Overview</h3>
+        <p style='color: #475569;'>This application uses <strong>IndoBART-v2</strong> that has been <strong>fine-tuned</strong> with the 
         <strong>LoRA (Low-Rank Adaptation)</strong> technique using Indonesian local news summary datasets 
         (MC, MMC, and Detik).</p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
-        <div class='custom-card'>
-        <h3 style='color: #667eea; margin-bottom: 16px;'>🎯 Features</h3>
-        <ul style='margin-left: 20px; line-height: 1.8;'>
+        <div class='card'>
+        <h3 style='color: #0f172a; margin-bottom: 16px; font-size: 1.25rem;'>🎯 Features</h3>
+        <ul style='margin-left: 20px; line-height: 1.8; color: #475569;'>
             <li><strong>Single Text Summarization</strong>: Summarize individual text instantly</li>
             <li><strong>Multiple Summary Types</strong>: Abstractive (1 & 3 sentences) and Extractive summaries</li>
             <li><strong>Batch Processing</strong>: Process multiple texts from CSV file</li>
@@ -1386,33 +1537,33 @@ def main():
         
         with col1:
             st.markdown("""
-            <div class='custom-card'>
-            <h3 style='color: #667eea; margin-bottom: 16px;'>🔧 Summarization</h3>
-            <p style='margin-bottom: 8px;'><strong>Base Model:</strong> IndoBART-v2</p>
-            <p style='margin-bottom: 8px;'><strong>Fine-tuning:</strong> LoRA/PEFT</p>
-            <p style='margin-bottom: 8px;'><strong>Training Data:</strong> MC, MMC, Detik</p>
-            <p style='margin-bottom: 8px;'><strong>Max Input:</strong> 800 tokens</p>
-            <p style='margin-bottom: 8px;'><strong>Max Output:</strong> 100 tokens</p>
-            <p style='margin-bottom: 0;'><strong>Generation:</strong> Beam search (4 beams)</p>
+            <div class='card'>
+            <h3 style='color: #0f172a; margin-bottom: 16px; font-size: 1.1rem;'>🔧 Summarization</h3>
+            <p style='margin-bottom: 8px; color: #475569;'><strong>Base Model:</strong> IndoBART-v2</p>
+            <p style='margin-bottom: 8px; color: #475569;'><strong>Fine-tuning:</strong> LoRA/PEFT</p>
+            <p style='margin-bottom: 8px; color: #475569;'><strong>Training Data:</strong> MC, MMC, Detik</p>
+            <p style='margin-bottom: 8px; color: #475569;'><strong>Max Input:</strong> 800 tokens</p>
+            <p style='margin-bottom: 8px; color: #475569;'><strong>Max Output:</strong> 100 tokens</p>
+            <p style='margin-bottom: 0; color: #475569;'><strong>Generation:</strong> Beam search (4 beams)</p>
             </div>
             """, unsafe_allow_html=True)
         
         with col2:
             st.markdown("""
-            <div class='custom-card'>
-            <h3 style='color: #667eea; margin-bottom: 16px;'>🌐 Translation</h3>
-            <p style='margin-bottom: 8px;'><strong>Model:</strong> Helsinki-NLP/opus-mt-id-en</p>
-            <p style='margin-bottom: 8px;'><strong>Direction:</strong> Indonesian → English only</p>
-            <p style='margin-bottom: 8px;'><strong>Size:</strong> ~300MB (lightweight)</p>
-            <p style='margin-bottom: 8px;'><strong>Max tokens:</strong> 512 per chunk</p>
-            <p style='margin-bottom: 0;'><strong>Auto-chunking:</strong> Support >400 words</p>
+            <div class='card'>
+            <h3 style='color: #0f172a; margin-bottom: 16px; font-size: 1.1rem;'>🌐 Translation</h3>
+            <p style='margin-bottom: 8px; color: #475569;'><strong>Model:</strong> Helsinki-NLP/opus-mt-id-en</p>
+            <p style='margin-bottom: 8px; color: #475569;'><strong>Direction:</strong> Indonesian → English only</p>
+            <p style='margin-bottom: 8px; color: #475569;'><strong>Size:</strong> ~300MB (lightweight)</p>
+            <p style='margin-bottom: 8px; color: #475569;'><strong>Max tokens:</strong> 512 per chunk</p>
+            <p style='margin-bottom: 0; color: #475569;'><strong>Auto-chunking:</strong> Support >400 words</p>
             </div>
             """, unsafe_allow_html=True)
         
         st.markdown("""
-        <div class='custom-card'>
-        <h3 style='color: #667eea; margin-bottom: 16px;'>💡 Usage Tips</h3>
-        <ul style='margin-left: 20px; line-height: 1.8;'>
+        <div class='card'>
+        <h3 style='color: #0f172a; margin-bottom: 16px; font-size: 1.25rem;'>💡 Usage Tips</h3>
+        <ul style='margin-left: 20px; line-height: 1.8; color: #475569; margin-bottom: 0;'>
             <li>Model fine-tuned specifically for Indonesian news summaries</li>
             <li><strong>URL Mode:</strong> Date automatically detected (format: "5 Desember 2024")</li>
             <li><strong>Text Cleaning:</strong> Auto-removes watermarks, copyrights, and metadata</li>
@@ -1425,13 +1576,13 @@ def main():
         """, unsafe_allow_html=True)
         
         st.markdown("""
-        <div class='custom-card'>
-        <h3 style='color: #667eea; margin-bottom: 16px;'>📚 Model Information</h3>
-        <p style='margin-bottom: 12px;'><strong>Base Model:</strong> IndoBART-v2 is a BART-based sequence-to-sequence model pretrained 
+        <div class='card'>
+        <h3 style='color: #0f172a; margin-bottom: 16px; font-size: 1.25rem;'>📚 Model Information</h3>
+        <p style='margin-bottom: 12px; color: #475569;'><strong>Base Model:</strong> IndoBART-v2 is a BART-based sequence-to-sequence model pretrained 
         on Indonesian language corpus.</p>
         
-        <p style='margin-bottom: 12px;'><strong>Fine-tuning Details:</strong></p>
-        <ul style='margin-left: 20px; line-height: 1.8;'>
+        <p style='margin-bottom: 12px; color: #475569;'><strong>Fine-tuning Details:</strong></p>
+        <ul style='margin-left: 20px; line-height: 1.8; color: #475569;'>
             <li><strong>Technique:</strong> LoRA (Low-Rank Adaptation) with PEFT</li>
             <li><strong>Dataset:</strong> Combined MC, MMC, and Detik datasets (Indonesian news)</li>
             <li><strong>Parameters:</strong> r=16, lora_alpha=32, lora_dropout=0.05</li>
@@ -1439,7 +1590,7 @@ def main():
             <li><strong>Training:</strong> 5 epochs with learning rate 5e-5</li>
         </ul>
         
-        <p style='margin-top: 12px;'><strong>Paper:</strong> <a href='https://aclanthology.org/2021.emnlp-main.699/' target='_blank' style='color: #667eea;'>IndoNLG: Benchmark and Resources for Evaluating Indonesian Natural Language Generation</a></p>
+        <p style='margin-top: 12px; color: #475569;'><strong>Paper:</strong> <a href='https://aclanthology.org/2021.emnlp-main.699/' target='_blank' style='color: #3b82f6;'>IndoNLG: Benchmark and Resources for Evaluating Indonesian Natural Language Generation</a></p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1449,24 +1600,24 @@ def main():
         col1, col2, col3 = st.columns(3)
         with col1:
             st.markdown(f"""
-            <div class='custom-card' style='text-align: center;'>
-            <p style='margin: 0; color: #6b7280;'><strong>Base Model</strong></p>
-            <p style='margin: 4px 0 0 0; color: #667eea;'><code>{MODEL_NAME}</code></p>
+            <div class='card' style='text-align: center;'>
+            <p style='margin: 0; color: #64748b;'><strong>Base Model</strong></p>
+            <p style='margin: 4px 0 0 0; color: #0f172a;'><code>{MODEL_NAME}</code></p>
             </div>
             """, unsafe_allow_html=True)
         with col2:
             st.markdown(f"""
-            <div class='custom-card' style='text-align: center;'>
-            <p style='margin: 0; color: #6b7280;'><strong>Checkpoint</strong></p>
-            <p style='margin: 4px 0 0 0; color: #667eea; font-size: 0.85rem;'><code>{CHECKPOINT_PATH}</code></p>
+            <div class='card' style='text-align: center;'>
+            <p style='margin: 0; color: #64748b;'><strong>Checkpoint</strong></p>
+            <p style='margin: 4px 0 0 0; color: #0f172a; font-size: 0.85rem;'><code>{CHECKPOINT_PATH}</code></p>
             </div>
             """, unsafe_allow_html=True)
         with col3:
             if 'device' in st.session_state:
                 st.markdown(f"""
-                <div class='custom-card' style='text-align: center;'>
-                <p style='margin: 0; color: #6b7280;'><strong>Device</strong></p>
-                <p style='margin: 4px 0 0 0; color: #667eea;'><code>{st.session_state['device']}</code></p>
+                <div class='card' style='text-align: center;'>
+                <p style='margin: 0; color: #64748b;'><strong>Device</strong></p>
+                <p style='margin: 4px 0 0 0; color: #0f172a;'><code>{st.session_state['device']}</code></p>
                 </div>
                 """, unsafe_allow_html=True)
         
