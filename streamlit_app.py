@@ -128,6 +128,282 @@ st.set_page_config(
 )
 
 # ============================================================
+# CUSTOM CSS FOR MODERN UI
+# ============================================================
+st.markdown("""
+<style>
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    /* Main App Styling */
+    .stApp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Main content area */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+    }
+    
+    /* Typography */
+    h1, h2, h3, h4, h5, h6, p, div, label, span {
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    /* Title styling */
+    h1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700 !important;
+        font-size: 3rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Subtitle styling */
+    .subtitle {
+        color: #6b7280;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+    
+    /* Info boxes */
+    .stMarkdown p {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+    
+    /* Tabs styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #f3f4f6;
+        padding: 8px;
+        border-radius: 12px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        background-color: transparent;
+        border-radius: 8px;
+        color: #6b7280;
+        font-weight: 600;
+        font-size: 1rem;
+        padding: 0 24px;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Input fields */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea {
+        border-radius: 12px !important;
+        border: 2px solid #e5e7eb !important;
+        padding: 12px 16px !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        background-color: #ffffff !important;
+    }
+    
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+    
+    /* Buttons */
+    .stButton > button {
+        border-radius: 12px !important;
+        padding: 12px 32px !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        border: none !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+    }
+    
+    .stButton > button[kind="primary"]:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    /* Info/Success/Warning boxes */
+    .stAlert {
+        border-radius: 12px !important;
+        border: none !important;
+        padding: 16px 20px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    div[data-testid="stMarkdownContainer"] > div[data-testid="stMarkdown"] > div > p {
+        font-size: 1rem;
+    }
+    
+    /* Metrics */
+    [data-testid="stMetricValue"] {
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-weight: 600 !important;
+        color: #6b7280 !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* Checkbox */
+    .stCheckbox {
+        padding: 8px 0;
+    }
+    
+    .stCheckbox > label {
+        font-weight: 500 !important;
+        font-size: 1rem !important;
+        color: #374151 !important;
+    }
+    
+    /* Radio buttons */
+    .stRadio > label {
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        color: #374151 !important;
+        margin-bottom: 12px !important;
+    }
+    
+    /* Slider */
+    .stSlider > div > div > div {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    /* File uploader */
+    [data-testid="stFileUploader"] {
+        border-radius: 12px !important;
+        border: 2px dashed #667eea !important;
+        padding: 24px !important;
+        background-color: #f9fafb !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    [data-testid="stFileUploader"]:hover {
+        border-color: #764ba2 !important;
+        background-color: #f3f4f6 !important;
+    }
+    
+    /* Progress bar */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%) !important;
+    }
+    
+    [data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    
+    [data-testid="stSidebar"] .stMarkdown {
+        color: white !important;
+    }
+    
+    [data-testid="stSidebar"] h2 {
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+    }
+    
+    /* Dataframe */
+    .stDataFrame {
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Custom card styling */
+    .custom-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        margin: 16px 0;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+    
+    .custom-card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+    
+    /* Success box with gradient */
+    .success-gradient {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin: 16px 0;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Info box with gradient */
+    .info-gradient {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin: 16px 0;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    /* Section headers */
+    .section-header {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid;
+        border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
+    }
+    
+    /* Divider */
+    hr {
+        margin: 2rem 0;
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #667eea, #764ba2, transparent);
+    }
+    
+    /* Caption text */
+    .stCaption {
+        color: #9ca3af !important;
+        font-size: 0.9rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
 # HELPER FUNCTIONS
 # ============================================================
 
@@ -399,12 +675,48 @@ def translate_long_text(text: str, model, tokenizer, device="cpu", max_length: i
 # ============================================================
 
 def main():
-    st.title("📝 Indonesian Text Summarizer + Translator")
-    st.markdown(f"**Summarization Model:** {MODEL_NAME} (Fine-tuned)")
-    st.markdown(f"**Translation Model:** {TRANSLATION_MODEL}")
+    st.markdown("<h1 style='text-align: center;'>📝 Indonesian Text Summarizer</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #6b7280; font-size: 1.1rem; margin-bottom: 2rem;'>AI-Powered Summarization with IndoBART-v2 & Translation</p>", unsafe_allow_html=True)
+    
+    # Feature highlight banner
+    st.markdown("""
+    <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 16px; margin-bottom: 24px; color: white; text-align: center;'>
+        <h3 style='margin: 0 0 12px 0; color: white;'>✨ Features</h3>
+        <p style='margin: 0; font-size: 0.95rem;'>
+            🎯 Abstractive & Extractive Summaries • 🌐 English Translation • 
+            📊 Batch Processing • 🔗 URL Extraction
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Model info cards
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("""
+        <div class="custom-card" style="text-align: center;">
+            <h3 style="color: #667eea; margin-bottom: 8px;">🤖 Model</h3>
+            <p style="color: #6b7280; margin: 0;">IndoBART-v2</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with col2:
+        st.markdown("""
+        <div class="custom-card" style="text-align: center;">
+            <h3 style="color: #667eea; margin-bottom: 8px;">⚡ Fine-tuned</h3>
+            <p style="color: #6b7280; margin: 0;">LoRA/PEFT</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with col3:
+        st.markdown("""
+        <div class="custom-card" style="text-align: center;">
+            <h3 style="color: #667eea; margin-bottom: 8px;">🌐 Translation</h3>
+            <p style="color: #6b7280; margin: 0;">Helsinki-NLP</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
     
     # Sidebar for configuration
-    st.sidebar.header("⚙️ Configuration")
+    st.sidebar.markdown("<h2 style='text-align: center; margin-bottom: 1.5rem;'>⚙️ Settings</h2>", unsafe_allow_html=True)
     
     # Load model automatically
     if 'model' not in st.session_state:
@@ -414,13 +726,13 @@ def main():
                 st.session_state['model'] = model
                 st.session_state['tokenizer'] = tokenizer
                 st.session_state['device'] = device
-                st.sidebar.success(f"✅ Summarization model loaded on {device}")
+                st.sidebar.markdown(f"<div class='success-gradient' style='text-align: center;'>✅ Model loaded on {device}</div>", unsafe_allow_html=True)
             else:
                 st.sidebar.error("❌ Failed to load model")
                 st.error("⚠️ Failed to load model. Please refresh the page.")
                 return
     else:
-        st.sidebar.success(f"✅ Summarization model ready on {st.session_state['device']}")
+        st.sidebar.markdown(f"<div class='success-gradient' style='text-align: center;'>✅ Model ready on {st.session_state['device']}</div>", unsafe_allow_html=True)
     
     # Load translation model (lazy loading)
     if 'translation_model' not in st.session_state:
@@ -429,7 +741,7 @@ def main():
         st.session_state['translation_loaded'] = False
     
     # Generation parameters
-    st.sidebar.header("🎛️ Generation Parameters")
+    st.sidebar.markdown("<h3 style='margin-top: 2rem; margin-bottom: 1rem;'>🎛️ Generation Parameters</h3>", unsafe_allow_html=True)
     num_sentences = st.sidebar.slider(
         "Number of Sentences", 
         min_value=1, max_value=10, 
@@ -457,7 +769,7 @@ def main():
     
     # Info model
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### 📊 Model Info")
+    st.sidebar.markdown("<h3 style='margin-bottom: 1rem;'>📊 Model Info</h3>", unsafe_allow_html=True)
     st.sidebar.markdown(f"**Source:** HuggingFace Hub")
     st.sidebar.markdown(f"**Model ID:** `{MODEL_NAME}`")
     st.sidebar.markdown(f"**Device:** `{st.session_state['device']}`")
@@ -467,7 +779,7 @@ def main():
     
     # Tab 1: Single Text Summarization
     with tab1:
-        st.header("Single Text Summarization")
+        st.markdown("<div class='section-header'>📄 Single Text Summarization</div>", unsafe_allow_html=True)
         
         # Pilihan input method
         input_method = st.radio(
@@ -660,60 +972,55 @@ def main():
                                     translate_summary = False
                         
                         # Display metadata
-                        st.markdown("### 📰 Informasi Berita")
+                        st.markdown("<div class='section-header'>📰 Informasi Berita</div>", unsafe_allow_html=True)
+                        
+                        info_html = "<div class='custom-card'>"
                         if article_title:
-                            st.markdown(f"**Judul:** {article_title}")
+                            info_html += f"<p><strong>📌 Judul:</strong> {article_title}</p>"
                         if article_date:
-                            st.markdown(f"**Tanggal:** {article_date}")
+                            info_html += f"<p><strong>📅 Tanggal:</strong> {article_date}</p>"
                         if article_url:
-                            st.markdown(f"**URL:** [{article_url}]({article_url})")
+                            info_html += f"<p><strong>🔗 URL:</strong> <a href='{article_url}' target='_blank' style='color: #667eea;'>{article_url}</a></p>"
+                        info_html += "</div>"
+                        st.markdown(info_html, unsafe_allow_html=True)
                         
-                        st.markdown("---")
-                        
-                        # Display summaries
-                        st.markdown("### 📋 Hasil Ringkasan")
+                        st.markdown("<div class='section-header'>📋 Hasil Ringkasan</div>", unsafe_allow_html=True)
                         
                         if translate_summary and st.session_state['translation_loaded']:
                             # Display side by side (Indonesian | English)
-                            st.markdown("#### 1️⃣ Ringkasan Abstraktif 1 Kalimat")
+                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>1️⃣ Ringkasan Abstraktif 1 Kalimat</h4>", unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.markdown("**🇮🇩 Indonesian**")
-                                st.info(summary_1s)
+                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #667eea; margin-bottom: 8px;'>🇮🇩 Indonesian</p><p style='margin: 0;'>" + summary_1s + "</p></div>", unsafe_allow_html=True)
                             with col2:
-                                st.markdown("**🇬🇧 English**")
-                                st.success(translated_1s)
+                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #10b981; margin-bottom: 8px;'>🇬🇧 English</p><p style='margin: 0;'>" + translated_1s + "</p></div>", unsafe_allow_html=True)
                             
-                            st.markdown("#### 3️⃣ Ringkasan Abstraktif 3 Kalimat")
+                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>3️⃣ Ringkasan Abstraktif 3 Kalimat</h4>", unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.markdown("**🇮🇩 Indonesian**")
-                                st.info(summary_3s)
+                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #667eea; margin-bottom: 8px;'>🇮🇩 Indonesian</p><p style='margin: 0;'>" + summary_3s + "</p></div>", unsafe_allow_html=True)
                             with col2:
-                                st.markdown("**🇬🇧 English**")
-                                st.success(translated_3s)
+                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #10b981; margin-bottom: 8px;'>🇬🇧 English</p><p style='margin: 0;'>" + translated_3s + "</p></div>", unsafe_allow_html=True)
                             
-                            st.markdown("#### 📝 Ringkasan Ekstraktif")
+                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>📝 Ringkasan Ekstraktif</h4>", unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.markdown("**🇮🇩 Indonesian**")
-                                st.info(summary_extractive)
+                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #667eea; margin-bottom: 8px;'>🇮🇩 Indonesian</p><p style='margin: 0;'>" + summary_extractive + "</p></div>", unsafe_allow_html=True)
                             with col2:
-                                st.markdown("**🇬🇧 English**")
-                                st.success(translated_ext)
+                                st.markdown("<div class='custom-card'><p style='margin: 0; font-weight: 600; color: #10b981; margin-bottom: 8px;'>🇬🇧 English</p><p style='margin: 0;'>" + translated_ext + "</p></div>", unsafe_allow_html=True)
                         else:
                             # Display Indonesian only
-                            st.markdown("#### 1️⃣ Ringkasan Abstraktif 1 Kalimat")
-                            st.info(summary_1s)
+                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>1️⃣ Ringkasan Abstraktif 1 Kalimat</h4>", unsafe_allow_html=True)
+                            st.markdown("<div class='custom-card'><p style='margin: 0;'>" + summary_1s + "</p></div>", unsafe_allow_html=True)
                             
-                            st.markdown("#### 3️⃣ Ringkasan Abstraktif 3 Kalimat")
-                            st.info(summary_3s)
+                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>3️⃣ Ringkasan Abstraktif 3 Kalimat</h4>", unsafe_allow_html=True)
+                            st.markdown("<div class='custom-card'><p style='margin: 0;'>" + summary_3s + "</p></div>", unsafe_allow_html=True)
                             
-                            st.markdown("#### 📝 Ringkasan Ekstraktif")
-                            st.info(summary_extractive)
+                            st.markdown("<h4 style='color: #667eea; margin-top: 1.5rem;'>📝 Ringkasan Ekstraktif</h4>", unsafe_allow_html=True)
+                            st.markdown("<div class='custom-card'><p style='margin: 0;'>" + summary_extractive + "</p></div>", unsafe_allow_html=True)
                         
                         # Statistics
-                        st.markdown("---")
+                        st.markdown("<div class='section-header'>📊 Statistics</div>", unsafe_allow_html=True)
                         col1, col2, col3, col4 = st.columns(4)
                         with col1:
                             st.metric("Original Words", len(text_input.split()))
@@ -729,15 +1036,19 @@ def main():
     
     # Tab 2: Batch Processing
     with tab2:
-        st.header("Batch Processing")
-        st.markdown("""Upload a CSV file with text columns to summarize multiple texts at once.
+        st.markdown("<div class='section-header'>📊 Batch Processing</div>", unsafe_allow_html=True)
+        st.markdown("""<div class='custom-card'>
+        <p style='margin-bottom: 12px;'><strong>Upload a CSV file to summarize multiple texts at once.</strong></p>
         
-        **Supported column formats:**
-        - **Text**: `text`, `Isi Berita` (required)
-        - **Title**: `title`, `Judul` (optional)
-        - **Date**: `date`, `Tanggal` (optional)
-        - **URL**: `url`, `URL` (optional)
-        """)
+        <p style='margin-bottom: 8px;'><strong>Supported column formats:</strong></p>
+        <ul style='margin-left: 20px;'>
+        <li><strong>Text</strong>: <code>text</code>, <code>Isi Berita</code> (required)</li>
+        <li><strong>Title</strong>: <code>title</code>, <code>Judul</code> (optional)</li>
+        <li><strong>Date</strong>: <code>date</code>, <code>Tanggal</code> (optional)</li>
+        <li><strong>URL</strong>: <code>url</code>, <code>URL</code> (optional)</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
         uploaded_file = st.file_uploader("Choose a CSV file", type=['csv'])
         
@@ -943,8 +1254,8 @@ def main():
     
     # Tab 3: Translation (Indonesian → English)
     with tab3:
-        st.header("🌐 Translation: Indonesian → English")
-        st.markdown("Translate text or summary from Indonesian to English")
+        st.markdown("<div class='section-header'>🌐 Translation: Indonesian → English</div>", unsafe_allow_html=True)
+        st.markdown("<div class='info-gradient'>Translate text or summary from Indonesian to English using Helsinki-NLP model</div>", unsafe_allow_html=True)
         
         # Load translation model on demand
         if not st.session_state['translation_loaded']:
@@ -1009,15 +1320,17 @@ def main():
                             st.success("✅ Translation completed!")
                             
                             # Display results side by side
+                            st.markdown("<div class='section-header'>📋 Translation Results</div>", unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                             with col1:
-                                st.markdown("### 🇮🇩 Indonesian")
-                                st.info(translation_input)
+                                st.markdown("<h4 style='color: #667eea;'>🇮🇩 Indonesian</h4>", unsafe_allow_html=True)
+                                st.markdown(f"<div class='custom-card'><p style='margin: 0;'>{translation_input}</p></div>", unsafe_allow_html=True)
                             with col2:
-                                st.markdown("### 🇬🇧 English")
-                                st.success(translated)
+                                st.markdown("<h4 style='color: #10b981;'>🇬🇧 English</h4>", unsafe_allow_html=True)
+                                st.markdown(f"<div class='custom-card' style='border-left: 4px solid #10b981;'><p style='margin: 0;'>{translated}</p></div>", unsafe_allow_html=True)
                             
                             # Statistics
+                            st.markdown("<div class='section-header'>📊 Statistics</div>", unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                             with col1:
                                 st.metric("Indonesian Words", len(translation_input.split()))
@@ -1028,108 +1341,136 @@ def main():
                             st.error(f"❌ Error during translation: {e}")
             
             # Quick tip
-            st.markdown("---")
+            st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("""
-            **💡 Tips:**
-            - This model is lightweight (~300MB) and accurate for news text
-            - Best for: news articles, summaries, formal text
-            - For long text (>400 words), automatically chunked
-            - Combine with summarization: summarize first, then translate!
-            """)
+            <div class='info-gradient'>
+            <h4 style='margin: 0 0 12px 0; color: white;'>💡 Tips:</h4>
+            <ul style='margin: 0; padding-left: 20px;'>
+                <li>This model is lightweight (~300MB) and accurate for news text</li>
+                <li>Best for: news articles, summaries, formal text</li>
+                <li>For long text (>400 words), automatically chunked</li>
+                <li>Combine with summarization: summarize first, then translate!</li>
+            </ul>
+            </div>
+            """, unsafe_allow_html=True)
     
     # Tab 4: About
     with tab4:
-        st.header("About This App")
+        st.markdown("<div class='section-header'>ℹ️ About This App</div>", unsafe_allow_html=True)
+        
         st.markdown("""
-        ### 📖 Overview
-        This application uses **IndoBART-v2** that has been **fine-tuned** with the 
-        **LoRA (Low-Rank Adaptation)** technique using Indonesian local news summary datasets 
-        (MC, MMC, and Detik).
+        <div class='custom-card'>
+        <h3 style='color: #667eea; margin-bottom: 16px;'>📖 Overview</h3>
+        <p>This application uses <strong>IndoBART-v2</strong> that has been <strong>fine-tuned</strong> with the 
+        <strong>LoRA (Low-Rank Adaptation)</strong> technique using Indonesian local news summary datasets 
+        (MC, MMC, and Detik).</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        ### 🎯 Features
-        - **Single Text Summarization**: Summarize individual text instantly
-        - **Title & Date Header**: Add optional title and date in summary header
-        - **Batch Processing**: Process multiple texts from CSV file (supports title & date columns)
-        - **URL Extraction**: Extract and summarize articles from news URLs
-          - **Auto-detect Date**: Automatically extract publication date from article
-          - **Smart Text Cleaning**: Automatically filter watermarks, copyrights, and junk text
-        - **Translation (Indonesian → English)**: 🆕
-          - Lightweight Helsinki-NLP/opus-mt-id-en model (~300MB)
-          - Support long text with automatic chunking
-          - Perfect combo: Summarize → Translate
-        - **Advanced Truncation**: Automatically truncate long sentences for 1-sentence summary
-        - **Customizable Parameters**: Adjust generation settings for various cases
-        - **Long Text Support**: Automatic chunking for text exceeding token limits
+        st.markdown("""
+        <div class='custom-card'>
+        <h3 style='color: #667eea; margin-bottom: 16px;'>🎯 Features</h3>
+        <ul style='margin-left: 20px; line-height: 1.8;'>
+            <li><strong>Single Text Summarization</strong>: Summarize individual text instantly</li>
+            <li><strong>Multiple Summary Types</strong>: Abstractive (1 & 3 sentences) and Extractive summaries</li>
+            <li><strong>Batch Processing</strong>: Process multiple texts from CSV file</li>
+            <li><strong>URL Extraction</strong>: Extract and summarize articles from news URLs with auto-date detection</li>
+            <li><strong>Translation</strong>: Translate summaries to English with Helsinki-NLP model</li>
+            <li><strong>Smart Text Cleaning</strong>: Automatically filter watermarks, copyrights, and junk text</li>
+            <li><strong>Customizable Parameters</strong>: Adjust generation settings for various cases</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
-        ### 🔧 Technical Details
-        **Summarization:**
-        - **Base Model**: IndoBART-v2 (indobenchmark/indobart-v2)
-        - **Fine-tuning**: LoRA/PEFT dengan dataset berita Indonesia
-        - **Training Data**: MC, MMC, Detik (ringkasan berita lokal)
-        - **Max Input**: 800 tokens (800 token per chunk)
-        - **Max Output**: 100 tokens
-        - **Generation**: Beam search (4 beams) with no_repeat_ngram
-        - **Advanced Features**: 
-          - Sentence truncation (max 22 words for 1 sentence)
-          - Auto date extraction (regex: "\d{1,2}\s+\w+\s+\d{4}")
-          - Text cleaning (filter: watermark, copyright, metadata)
+        col1, col2 = st.columns(2)
         
-        **Translation:**
-        - **Model**: Helsinki-NLP/opus-mt-id-en (MarianMT)
-        - **Direction**: Indonesian → English only
-        - **Size**: ~300MB (lightweight)
-        - **Max tokens**: 512 per chunk
-        - **Auto-chunking**: Support teks >400 kata
+        with col1:
+            st.markdown("""
+            <div class='custom-card'>
+            <h3 style='color: #667eea; margin-bottom: 16px;'>🔧 Summarization</h3>
+            <p style='margin-bottom: 8px;'><strong>Base Model:</strong> IndoBART-v2</p>
+            <p style='margin-bottom: 8px;'><strong>Fine-tuning:</strong> LoRA/PEFT</p>
+            <p style='margin-bottom: 8px;'><strong>Training Data:</strong> MC, MMC, Detik</p>
+            <p style='margin-bottom: 8px;'><strong>Max Input:</strong> 800 tokens</p>
+            <p style='margin-bottom: 8px;'><strong>Max Output:</strong> 100 tokens</p>
+            <p style='margin-bottom: 0;'><strong>Generation:</strong> Beam search (4 beams)</p>
+            </div>
+            """, unsafe_allow_html=True)
         
-        - **Device**: Auto-detect CUDA/CPU
+        with col2:
+            st.markdown("""
+            <div class='custom-card'>
+            <h3 style='color: #667eea; margin-bottom: 16px;'>🌐 Translation</h3>
+            <p style='margin-bottom: 8px;'><strong>Model:</strong> Helsinki-NLP/opus-mt-id-en</p>
+            <p style='margin-bottom: 8px;'><strong>Direction:</strong> Indonesian → English only</p>
+            <p style='margin-bottom: 8px;'><strong>Size:</strong> ~300MB (lightweight)</p>
+            <p style='margin-bottom: 8px;'><strong>Max tokens:</strong> 512 per chunk</p>
+            <p style='margin-bottom: 0;'><strong>Auto-chunking:</strong> Support >400 words</p>
+            </div>
+            """, unsafe_allow_html=True)
         
-        ### 📊 Generation Parameters
-        - **Num Beams**: Beam search width - higher value = better quality (default: 4)
-        - **Max Output Length**: Maximum output length in tokens (default: 100)
-        - **Max Input Length**: Maximum input length, longer text will be chunked (default: 800)
-        - **Num Sentences**: Number of sentences in final summary (default: 3)
-          - **1 sentence**: Auto truncate at comma if > 110 char, max 22 words
-          - **Multi-sentence**: Take first N sentences from model results
+        st.markdown("""
+        <div class='custom-card'>
+        <h3 style='color: #667eea; margin-bottom: 16px;'>💡 Usage Tips</h3>
+        <ul style='margin-left: 20px; line-height: 1.8;'>
+            <li>Model fine-tuned specifically for Indonesian news summaries</li>
+            <li><strong>URL Mode:</strong> Date automatically detected (format: "5 Desember 2024")</li>
+            <li><strong>Text Cleaning:</strong> Auto-removes watermarks, copyrights, and metadata</li>
+            <li><strong>Abstractive Summary:</strong> AI generates new sentences based on content</li>
+            <li><strong>Extractive Summary:</strong> Copy-paste key sentences from original text (lead-based)</li>
+            <li><strong>Translation:</strong> Check translation option to get English versions</li>
+            <li><strong>Batch CSV:</strong> Supports multiple column formats for flexibility</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
         
-        ### 💡 Usage Tips
-        - This model has been fine-tuned specifically for Indonesian news summaries
-        - **Title & Date**: Enter title and date for informative summary header
-        - **URL Mode**: Date automatically detected from article (format: "5 Desember 2024")
-        - **Text Cleaning**: Scraper automatically removes watermark (MTD, WF), copyright, and metadata
-        - **1 Sentence Mode**: Perfect for headline/lead, automatically truncated to ultra-compact summary
-        - **Batch CSV**: Supports training dataset format (`Judul`, `Tanggal`, `Isi Berita`) or general format (`title`, `date`, `text`)
-        - **🆕 Translation**: Check "Translate summary to English" checkbox in Tab 1/2 to auto-translate results
-          - Translation model only loads when needed (lazy loading)
-          - Tab 1: Results displayed side-by-side (Indonesian | English)
-          - Tab 2: Results have additional 'english_summary' column in CSV
-        - For best results, use complete sentences and well-structured text
-        - Adjust number of sentences based on desired summary length
-        - Higher beam search value produces better quality but slower
-        - This model works best with Indonesian news text
+        st.markdown("""
+        <div class='custom-card'>
+        <h3 style='color: #667eea; margin-bottom: 16px;'>📚 Model Information</h3>
+        <p style='margin-bottom: 12px;'><strong>Base Model:</strong> IndoBART-v2 is a BART-based sequence-to-sequence model pretrained 
+        on Indonesian language corpus.</p>
         
-        ### 📚 Model Information
-        **Base Model**: IndoBART-v2 is a BART-based sequence-to-sequence model pretrained 
-        on Indonesian language corpus.
+        <p style='margin-bottom: 12px;'><strong>Fine-tuning Details:</strong></p>
+        <ul style='margin-left: 20px; line-height: 1.8;'>
+            <li><strong>Technique:</strong> LoRA (Low-Rank Adaptation) with PEFT</li>
+            <li><strong>Dataset:</strong> Combined MC, MMC, and Detik datasets (Indonesian news)</li>
+            <li><strong>Parameters:</strong> r=16, lora_alpha=32, lora_dropout=0.05</li>
+            <li><strong>Target Modules:</strong> q_proj, k_proj, v_proj, o_proj, fc1, fc2</li>
+            <li><strong>Training:</strong> 5 epochs with learning rate 5e-5</li>
+        </ul>
         
-        **Fine-tuning**: This model has been fine-tuned using:
-        - **Technique**: LoRA (Low-Rank Adaptation) with PEFT
-        - **Dataset**: Combined MC, MMC, and Detik datasets (Indonesian news)
-        - **Parameters**: r=16, lora_alpha=32, lora_dropout=0.05
-        - **Target Modules**: q_proj, k_proj, v_proj, o_proj, fc1, fc2
-        - **Training**: 5 epochs with learning rate 5e-5
-        
-        **Paper**: [IndoNLG: Benchmark and Resources for Evaluating Indonesian Natural Language Generation](https://aclanthology.org/2021.emnlp-main.699/)
-        
-        ### 🤝 Support
-        For questions or issues, please refer to the model documentation or contact the development team.
-        """)
+        <p style='margin-top: 12px;'><strong>Paper:</strong> <a href='https://aclanthology.org/2021.emnlp-main.699/' target='_blank' style='color: #667eea;'>IndoNLG: Benchmark and Resources for Evaluating Indonesian Natural Language Generation</a></p>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("---")
-        st.markdown(f"**Base Model:** `{MODEL_NAME}`")
-        st.markdown(f"**Checkpoint:** `{CHECKPOINT_PATH}`")
-        if 'device' in st.session_state:
-            st.markdown(f"**Device:** `{st.session_state['device']}`")
-        st.markdown("**Framework:** PyTorch + Transformers + PEFT + Streamlit")
+        
+        # Footer
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"""
+            <div class='custom-card' style='text-align: center;'>
+            <p style='margin: 0; color: #6b7280;'><strong>Base Model</strong></p>
+            <p style='margin: 4px 0 0 0; color: #667eea;'><code>{MODEL_NAME}</code></p>
+            </div>
+            """, unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"""
+            <div class='custom-card' style='text-align: center;'>
+            <p style='margin: 0; color: #6b7280;'><strong>Checkpoint</strong></p>
+            <p style='margin: 4px 0 0 0; color: #667eea; font-size: 0.85rem;'><code>{CHECKPOINT_PATH}</code></p>
+            </div>
+            """, unsafe_allow_html=True)
+        with col3:
+            if 'device' in st.session_state:
+                st.markdown(f"""
+                <div class='custom-card' style='text-align: center;'>
+                <p style='margin: 0; color: #6b7280;'><strong>Device</strong></p>
+                <p style='margin: 4px 0 0 0; color: #667eea;'><code>{st.session_state['device']}</code></p>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        st.markdown("<p style='text-align: center; color: #9ca3af; margin-top: 2rem;'>Built with PyTorch + Transformers + PEFT + Streamlit</p>", unsafe_allow_html=True)
 
 # ============================================================
 # RUN APP
