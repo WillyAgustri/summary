@@ -568,6 +568,13 @@ def main():
                     disabled=True
                 )
         
+        # Translation option
+        translate_summary = st.checkbox(
+            "🌐 Translate summaries to English",
+            value=False,
+            help="Automatically translate all summaries to English (requires translation model)"
+        )
+        
         col1, col2 = st.columns([1, 5])
         with col1:
             summarize_btn = st.button("🚀 Summarize", type="primary")
@@ -580,6 +587,19 @@ def main():
             if not text_input.strip():
                 st.warning("⚠️ Please enter text or fetch article from URL first.")
             else:
+                # Check if translation is needed and model not loaded
+                if translate_summary and not st.session_state['translation_loaded']:
+                    with st.spinner("Loading translation model..."):
+                        trans_model, trans_tokenizer, trans_device = load_translation_model()
+                        if trans_model is not None:
+                            st.session_state['translation_model'] = trans_model
+                            st.session_state['translation_tokenizer'] = trans_tokenizer
+                            st.session_state['translation_device'] = trans_device
+                            st.session_state['translation_loaded'] = True
+                        else:
+                            st.error("❌ Failed to load translation model")
+                            translate_summary = False
+                
                 with st.spinner("Generating summaries..."):
                     try:
                         # Generate Abstractive 1 sentence
@@ -611,6 +631,34 @@ def main():
                         
                         st.success("✅ Summaries generated!")
                         
+                        # Translate if option is checked
+                        if translate_summary and st.session_state['translation_loaded']:
+                            with st.spinner("Translating summaries to English..."):
+                                try:
+                                    translated_1s = translate_text(
+                                        summary_1s,
+                                        st.session_state['translation_model'],
+                                        st.session_state['translation_tokenizer'],
+                                        device=st.session_state['translation_device']
+                                    )
+                                    
+                                    translated_3s = translate_text(
+                                        summary_3s,
+                                        st.session_state['translation_model'],
+                                        st.session_state['translation_tokenizer'],
+                                        device=st.session_state['translation_device']
+                                    )
+                                    
+                                    translated_ext = translate_text(
+                                        summary_extractive,
+                                        st.session_state['translation_model'],
+                                        st.session_state['translation_tokenizer'],
+                                        device=st.session_state['translation_device']
+                                    )
+                                except Exception as e:
+                                    st.error(f"❌ Translation error: {e}")
+                                    translate_summary = False
+                        
                         # Display metadata
                         st.markdown("### 📰 Informasi Berita")
                         if article_title:
@@ -625,14 +673,44 @@ def main():
                         # Display summaries
                         st.markdown("### 📋 Hasil Ringkasan")
                         
-                        st.markdown("#### 1️⃣ Ringkasan Abstraktif 1 Kalimat")
-                        st.info(summary_1s)
-                        
-                        st.markdown("#### 3️⃣ Ringkasan Abstraktif 3 Kalimat")
-                        st.info(summary_3s)
-                        
-                        st.markdown("#### 📝 Ringkasan Ekstraktif")
-                        st.info(summary_extractive)
+                        if translate_summary and st.session_state['translation_loaded']:
+                            # Display side by side (Indonesian | English)
+                            st.markdown("#### 1️⃣ Ringkasan Abstraktif 1 Kalimat")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.markdown("**🇮🇩 Indonesian**")
+                                st.info(summary_1s)
+                            with col2:
+                                st.markdown("**🇬🇧 English**")
+                                st.success(translated_1s)
+                            
+                            st.markdown("#### 3️⃣ Ringkasan Abstraktif 3 Kalimat")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.markdown("**🇮🇩 Indonesian**")
+                                st.info(summary_3s)
+                            with col2:
+                                st.markdown("**🇬🇧 English**")
+                                st.success(translated_3s)
+                            
+                            st.markdown("#### 📝 Ringkasan Ekstraktif")
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.markdown("**🇮🇩 Indonesian**")
+                                st.info(summary_extractive)
+                            with col2:
+                                st.markdown("**🇬🇧 English**")
+                                st.success(translated_ext)
+                        else:
+                            # Display Indonesian only
+                            st.markdown("#### 1️⃣ Ringkasan Abstraktif 1 Kalimat")
+                            st.info(summary_1s)
+                            
+                            st.markdown("#### 3️⃣ Ringkasan Abstraktif 3 Kalimat")
+                            st.info(summary_3s)
+                            
+                            st.markdown("#### 📝 Ringkasan Ekstraktif")
+                            st.info(summary_extractive)
                         
                         # Statistics
                         st.markdown("---")
@@ -707,10 +785,34 @@ def main():
                             optional_cols.append(f"'{url_col}'")
                         st.info(f"ℹ️ Optional columns found: {', '.join(optional_cols)}")
                     
+                    # Translation option for batch
+                    translate_batch = st.checkbox(
+                        "🌐 Translate summaries to English",
+                        value=False,
+                        help="Automatically translate all summaries to English",
+                        key="translate_batch"
+                    )
+                    
                     if st.button("🚀 Process All Texts", type="primary"):
+                        # Load translation model if needed
+                        if translate_batch and not st.session_state['translation_loaded']:
+                            with st.spinner("Loading translation model..."):
+                                trans_model, trans_tokenizer, trans_device = load_translation_model()
+                                if trans_model is not None:
+                                    st.session_state['translation_model'] = trans_model
+                                    st.session_state['translation_tokenizer'] = trans_tokenizer
+                                    st.session_state['translation_device'] = trans_device
+                                    st.session_state['translation_loaded'] = True
+                                else:
+                                    st.error("❌ Failed to load translation model")
+                                    translate_batch = False
+                        
                         summaries_1s = []
                         summaries_3s = []
                         summaries_extractive = []
+                        translated_1s = [] if translate_batch else None
+                        translated_3s = [] if translate_batch else None
+                        translated_ext = [] if translate_batch else None
                         progress_bar = st.progress(0)
                         status_text = st.empty()
                         
@@ -750,14 +852,53 @@ def main():
                                     summary_ext = extractive_summary(text, num_sentences=3)
                                     summaries_extractive.append(summary_ext)
                                     
+                                    # Translate if option is checked
+                                    if translate_batch and st.session_state['translation_loaded']:
+                                        try:
+                                            trans_1s = translate_text(
+                                                summary_1s,
+                                                st.session_state['translation_model'],
+                                                st.session_state['translation_tokenizer'],
+                                                device=st.session_state['translation_device']
+                                            )
+                                            translated_1s.append(trans_1s)
+                                            
+                                            trans_3s = translate_text(
+                                                summary_3s,
+                                                st.session_state['translation_model'],
+                                                st.session_state['translation_tokenizer'],
+                                                device=st.session_state['translation_device']
+                                            )
+                                            translated_3s.append(trans_3s)
+                                            
+                                            trans_ext = translate_text(
+                                                summary_ext,
+                                                st.session_state['translation_model'],
+                                                st.session_state['translation_tokenizer'],
+                                                device=st.session_state['translation_device']
+                                            )
+                                            translated_ext.append(trans_ext)
+                                        except Exception as e:
+                                            translated_1s.append(f"Translation error: {str(e)}")
+                                            translated_3s.append(f"Translation error: {str(e)}")
+                                            translated_ext.append(f"Translation error: {str(e)}")
+                                    
                                 except Exception as e:
                                     summaries_1s.append(f"Error: {str(e)}")
                                     summaries_3s.append(f"Error: {str(e)}")
                                     summaries_extractive.append(f"Error: {str(e)}")
+                                    if translate_batch:
+                                        translated_1s.append("")
+                                        translated_3s.append("")
+                                        translated_ext.append("")
                             else:
                                 summaries_1s.append("")
                                 summaries_3s.append("")
                                 summaries_extractive.append("")
+                                if translate_batch:
+                                    translated_1s.append("")
+                                    translated_3s.append("")
+                                    translated_ext.append("")
                             
                             progress_bar.progress((idx + 1) / len(df))
                         
@@ -765,6 +906,10 @@ def main():
                         df['ringkasan_abstraktif_1_kalimat'] = summaries_1s
                         df['ringkasan_abstraktif_3_kalimat'] = summaries_3s
                         df['ringkasan_ekstraktif'] = summaries_extractive
+                        if translate_batch:
+                            df['english_abstraktif_1_kalimat'] = translated_1s
+                            df['english_abstraktif_3_kalimat'] = translated_3s
+                            df['english_ekstraktif'] = translated_ext
                         
                         st.success("✅ All texts processed!")
                         
@@ -778,6 +923,9 @@ def main():
                             display_cols.append(url_col)
                         display_cols.extend([text_col, 'ringkasan_abstraktif_1_kalimat', 
                                            'ringkasan_abstraktif_3_kalimat', 'ringkasan_ekstraktif'])
+                        if translate_batch:
+                            display_cols.extend(['english_abstraktif_1_kalimat', 
+                                               'english_abstraktif_3_kalimat', 'english_ekstraktif'])
                         
                         st.dataframe(df[display_cols])
                         
