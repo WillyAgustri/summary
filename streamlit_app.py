@@ -404,8 +404,8 @@ def translate_long_text(text: str, model, tokenizer, device="cpu", max_length: i
 # ============================================================
 
 def main():
-    st.markdown("<h1 style='text-align: center; color: #0f172a;'>📝 Indonesian Text Summarizer</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #64748b; font-size: 1.1rem; margin-bottom: 1.5rem;'>AI-Powered Summarization with IndoBART-v2 & Translation</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>📝Summarization-indobart</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #64748b; font-size: 1.1rem; margin-bottom: 1.5rem;'>AI-Powered Summarization with IndoBART-v2 + Finetuned & Translation</p>", unsafe_allow_html=True)
     
     # Feature highlight banner
     st.markdown("""
@@ -449,7 +449,7 @@ def main():
     st.markdown("<br>", unsafe_allow_html=True)
     
     # Sidebar for configuration
-    st.sidebar.markdown("<h2 style='text-align: center; margin-bottom: 1.5rem; color: #0f172a;'>⚙️ Settings</h2>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h2 style='text-align: center; margin-bottom: 1.5rem;'>⚙️ Settings</h2>", unsafe_allow_html=True)
     
     # Load model automatically
     if 'model' not in st.session_state:
@@ -474,7 +474,7 @@ def main():
         st.session_state['translation_loaded'] = False
     
     # Generation parameters
-    st.sidebar.markdown("<h3 style='margin-top: 2rem; margin-bottom: 1rem; color: #0f172a;'> 🎛️ Generation Parameters</h3>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h3 style='margin-top: 2rem; margin-bottom: 1rem;'> 🎛️ Generation Parameters</h3>", unsafe_allow_html=True)
     num_sentences = st.sidebar.slider(
         "Number of Sentences", 
         min_value=1, max_value=10, 
