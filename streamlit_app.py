@@ -2,7 +2,7 @@
 """
 Streamlit App - Indonesian Text Summarization
 Model: IndoBART-v2 + LoRA Fine-tuning
-(Pola berdasarkan copy_dari_09.py)
+(Pattern based on copy_dari_09.py)
 """
 
 import streamlit as st
@@ -23,9 +23,9 @@ from urllib.parse import urlparse
 # ============================================================
 # CONFIGURATION
 # ============================================================
-MODEL_NAME = "indobenchmark/indobart-v2"  # Base model dari HuggingFace
-CHECKPOINT_PATH = "outputs/indobart-v2-detik/checkpoint-800"  # Path ke checkpoint fine-tuned
-TRANSLATION_MODEL = "Helsinki-NLP/opus-mt-id-en"  # Model terjemahan Indonesia-Inggris
+MODEL_NAME = "indobenchmark/indobart-v2"  # Base model from HuggingFace
+CHECKPOINT_PATH = "outputs/indobart-v2-detik/checkpoint-800"  # Path to fine-tuned checkpoint
+TRANSLATION_MODEL = "Helsinki-NLP/opus-mt-id-en"  # Indonesian-English translation model
 MAX_INPUT_LEN = 800
 MAX_OUTPUT_LEN = 100
 DEFAULT_NUM_SENTENCES = 3
@@ -39,14 +39,14 @@ LAYOUT = "wide"
 # ============================================================
 
 def extract_text_from_url(url: str) -> tuple:
-    """Extract teks artikel dari URL berita (sama seperti copy_dari_09.py)"""
+    """Extract article text from news URL (same as copy_dari_09.py)"""
     try:
-        # Set headers agar tidak diblock
+        # Set headers to avoid blocking
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
         
-        # Fetch halaman
+        # Fetch page
         response = requests.get(url, headers=headers, timeout=30)
         response.raise_for_status()
         
@@ -59,26 +59,26 @@ def extract_text_from_url(url: str) -> tuple:
         if title_tag:
             title = title_tag.get_text().strip()
         if not title:
-            title = "Tanpa Judul"
+            title = "No Title"
         
-        # --- Auto-extract Date dari konten ---
+        # --- Auto-extract Date from content ---
         date = None
-        # Coba pattern tanggal Indonesia: "5 Desember 2024", "01 Januari 2025"
+        # Try Indonesian date pattern: "5 Desember 2024", "01 Januari 2025"
         match = re.search(r"\d{1,2}\s+\w+\s+\d{4}", soup.get_text())
         if match:
             date = match.group(0)
         
-        # --- Extract paragraf artikel ---
+        # --- Extract article paragraphs ---
         article_text = ""
         
-        # Method 1: Cari container umum untuk berita
+        # Method 1: Find common container for news
         container = soup.find('div', class_='single-content') or soup.find('div', class_='entry-content')
         
-        # Method 2: Cari tag article
+        # Method 2: Find article tag
         if not container:
             container = soup.find('article')
         
-        # Method 3: Cari div dengan class yang umum untuk konten artikel
+        # Method 3: Find div with common class for article content
         if not container:
             content_divs = soup.find_all('div', class_=re.compile(r'(content|article|story|post-content|entry-content)', re.I))
             if content_divs:
@@ -96,7 +96,7 @@ def extract_text_from_url(url: str) -> tuple:
         for p in paragraphs:
             text = p.get_text(" ", strip=True)
             if text and len(text) > 50:
-                # Bersihkan teks sampah umum (watermark, copyright, dll)
+                # Clean common junk text (watermark, copyright, etc.)
                 text = re.sub(r"\b(Dibaca|Foto|©|All rights reserved|MTD|WF|DINAS KOMUNIKASI.*)\b.*", "", text)
                 text = re.sub(r"\b(Baca juga|Berita terkait|Simak video|ADVERTISEMENT|Halaman selanjutnya)\b.*", "", text, flags=re.IGNORECASE)
                 text = text.strip()
@@ -105,11 +105,11 @@ def extract_text_from_url(url: str) -> tuple:
         
         article_text = " ".join(clean_paragraphs)
         
-        # Normalisasi spasi
+        # Normalize spaces
         article_text = re.sub(r'\s+', ' ', article_text).strip()
         
         if not article_text:
-            return None, "Tidak dapat menemukan konten artikel di URL tersebut."
+            return None, "Cannot find article content at the URL."
         
         return (title, date, article_text), None
         
@@ -146,14 +146,14 @@ def load_translation_model():
 
 @st.cache_resource
 def load_model_and_tokenizer():
-    """Load model IndoBART-v2 + LoRA fine-tuned dan tokenizer dengan caching"""
+    """Load IndoBART-v2 + LoRA fine-tuned model and tokenizer with caching"""
     # Auto-detect device
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
-    # Load tokenizer dari HuggingFace
+    # Load tokenizer from HuggingFace
     tokenizer = IndoNLGTokenizer.from_pretrained(MODEL_NAME)
     
-    # Patch fungsi pad untuk kompatibilitas (dari copy_dari_09.py)
+    # Patch pad function for compatibility (from copy_dari_09.py)
     def _compat_pad(self, encoded_inputs, padding=False, max_length=None,
                     pad_to_multiple_of=None, return_attention_mask=None,
                     return_tensors=None, verbose=True, **kwargs):
@@ -168,10 +168,10 @@ def load_model_and_tokenizer():
     
     # Load base model + LoRA fine-tuned checkpoint
     try:
-        # Load base model dari HuggingFace
+        # Load base model from HuggingFace
         base_model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME).to(device)
         
-        # Setup pad token jika belum ada
+        # Setup pad token if not available
         if tokenizer.pad_token is None:
             if tokenizer.eos_token:
                 tokenizer.pad_token = tokenizer.eos_token
@@ -179,10 +179,10 @@ def load_model_and_tokenizer():
                 tokenizer.add_special_tokens({"pad_token": "[PAD]"})
                 base_model.resize_token_embeddings(len(tokenizer))
         
-        # Load LoRA adapter dari checkpoint (jika ada)
+        # Load LoRA adapter from checkpoint (if available)
         if os.path.exists(CHECKPOINT_PATH):
             model = PeftModel.from_pretrained(base_model, CHECKPOINT_PATH)
-            model = model.merge_and_unload()  # Merge LoRA weights ke base model
+            model = model.merge_and_unload()  # Merge LoRA weights to base model
             st.sidebar.info(f"✅ Loaded fine-tuned model from {CHECKPOINT_PATH}")
         else:
             st.sidebar.warning(f"⚠️ Checkpoint not found: {CHECKPOINT_PATH}")
@@ -192,16 +192,16 @@ def load_model_and_tokenizer():
         model = model.to(device)
         model.eval()
         
-        # Set generation config (sama seperti copy_dari_09.py)
+        # Set generation config (same as copy_dari_09.py)
         model.generation_config = GenerationConfig(
-            do_sample=False,              # nonaktifkan sampling agar lebih deterministik
-            num_beams=4,                  # beam search = kualitas ringkasan naik signifikan
+            do_sample=False,              # disable sampling for more deterministic results
+            num_beams=4,                  # beam search = significantly better summary quality
             top_p=0.9,
             temperature=0.8,
             top_k=40,
             no_repeat_ngram_size=3,
             repetition_penalty=1.2,
-            length_penalty=2.0,           # penalti panjang biar ringkasan lebih padat
+            length_penalty=2.0,           # length penalty for more compact summary
             max_new_tokens=128,
             min_new_tokens=25,
             early_stopping=True,
@@ -217,7 +217,7 @@ def load_model_and_tokenizer():
         return None, None, None
 
 def chunk_text(text: str, tokenizer, max_input_length: int = 800, stride: int = 400) -> List[str]:
-    """Membagi teks panjang jadi beberapa chunk"""
+    """Split long text into multiple chunks"""
     inputs = tokenizer(
         text,
         return_tensors="pt",
@@ -240,7 +240,7 @@ def chunk_text(text: str, tokenizer, max_input_length: int = 800, stride: int = 
 def summarize_chunk(text: str, model, tokenizer, device="cpu",
                     max_input_length: int = 800, max_output_length: int = 100,
                     num_beams: int = 4) -> str:
-    """Ringkas 1 chunk teks (sama seperti copy_dari_09.py)"""
+    """Summarize 1 text chunk (same as copy_dari_09.py)"""
     inputs = tokenizer(
         text,
         return_tensors="pt",
@@ -252,8 +252,8 @@ def summarize_chunk(text: str, model, tokenizer, device="cpu",
     with torch.no_grad():
         summary_ids = model.generate(
             inputs["input_ids"],
-            # Parameter di bawah akan override generation_config jika diset
-            # Gunakan generation_config default kecuali perlu override
+            # Parameters below will override generation_config if set
+            # Use default generation_config unless override is needed
             max_new_tokens=max_output_length,
         )
 
@@ -269,10 +269,8 @@ def summarize_long_text(
     max_output_length: int = 100,
     num_sentences: int = 3,
     num_beams: int = 4,
-    title: str = None,   # judul opsional
-    date: str = None     # tanggal opsional
 ) -> str:
-    """Ringkas teks panjang dengan chunking (sama seperti copy_dari_09.py)"""
+    """Summarize long text with chunking (abstractive summary)"""
     chunks = chunk_text(text, tokenizer, max_input_length=max_input_length, stride=stride)
     summaries = []
 
@@ -289,50 +287,68 @@ def summarize_long_text(
 
     final_summary = " ".join(summaries).strip()
 
-    # --------- NORMALISASI KALIMAT ---------
+    # --------- SENTENCE NORMALIZATION ---------
     text = final_summary.replace("\n", " ")
-    text = " ".join(text.split())   # hilangkan spasi berlebih
+    text = " ".join(text.split())   # remove extra spaces
 
-    # --------- PISAH KALIMAT MODEL ---------
+    # --------- SPLIT SENTENCES ---------
     sentences = [s.strip() for s in text.split(".") if len(s.strip()) > 0]
 
-    # --------- RINGKAS JIKA TERLALU PANJANG (Advanced Truncation) ---------
+    # --------- TRUNCATE IF TOO LONG (Advanced Truncation) ---------
     if num_sentences == 1 and len(sentences) > 0:
-        # Ambil hanya klausa pertama dari kalimat pertama untuk ringkasan 1 kalimat
+        # Take only the first clause from the first sentence for 1-sentence summary
         first = sentences[0]
 
-        # Jika kalimat terlalu panjang, potong di koma pertama
+        # If sentence is too long, cut at first comma
         if "," in first and len(first) > 110:
             first = first.split(",")[0]
 
-        # Ambil maksimum 18–22 kata agar tetap 1 kalimat padat
+        # Take maximum 18-22 words to keep 1 compact sentence
         words = first.split()
         if len(words) > 22:
             first = " ".join(words[:22])
 
         final_summary = first
     else:
-        # Untuk multi-sentence, ambil N kalimat pertama
+        # For multi-sentence, take first N sentences
         if len(sentences) > num_sentences:
             sentences = sentences[:num_sentences]
         final_summary = ". ".join(sentences).strip()
 
-    # --------- TAMBAH TITIK DI AKHIR ---------
+    # --------- ADD PERIOD AT THE END ---------
     if not final_summary.endswith("."):
         final_summary += "."
 
-    # --- Susun header (judul + tanggal kalau ada) ---
-    header_parts = []
-    if title:
-        header_parts.append(f"📰 {title}")
-    if date:
-        header_parts.append(f"📅 {date}")
-
-    header = "\n".join(header_parts)
-    if header:
-        final_summary = f"{header}\n{final_summary}"
-
     return final_summary
+
+def extractive_summary(text: str, num_sentences: int = 3) -> str:
+    """
+    Extractive summarization: Select key sentences from the original text.
+    This is lead-like summarization (copy-paste sentences from the article).
+    """
+    # Normalize text
+    text = text.replace("\n", " ")
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    # Split into sentences
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    sentences = [s.strip() for s in sentences if len(s.strip()) > 20]  # Filter very short sentences
+    
+    if len(sentences) == 0:
+        return "No valid sentences found."
+    
+    # For extractive summary, take the first N sentences (lead-based approach)
+    # This is typical for news articles where key information is at the beginning
+    selected_sentences = sentences[:min(num_sentences, len(sentences))]
+    
+    # Join sentences
+    result = " ".join(selected_sentences)
+    
+    # Ensure it ends with period
+    if not result.endswith(('.', '!', '?')):
+        result += "."
+    
+    return result
 
 # ============================================================
 # TRANSLATION FUNCTIONS
@@ -387,10 +403,10 @@ def main():
     st.markdown(f"**Summarization Model:** {MODEL_NAME} (Fine-tuned)")
     st.markdown(f"**Translation Model:** {TRANSLATION_MODEL}")
     
-    # Sidebar untuk konfigurasi
+    # Sidebar for configuration
     st.sidebar.header("⚙️ Configuration")
     
-    # Load model secara otomatis
+    # Load model automatically
     if 'model' not in st.session_state:
         with st.spinner("Loading summarization model..."):
             model, tokenizer, device = load_model_and_tokenizer()
@@ -401,7 +417,7 @@ def main():
                 st.sidebar.success(f"✅ Summarization model loaded on {device}")
             else:
                 st.sidebar.error("❌ Failed to load model")
-                st.error("⚠️ Gagal memuat model. Silakan refresh halaman.")
+                st.error("⚠️ Failed to load model. Please refresh the page.")
                 return
     else:
         st.sidebar.success(f"✅ Summarization model ready on {st.session_state['device']}")
@@ -418,25 +434,25 @@ def main():
         "Number of Sentences", 
         min_value=1, max_value=10, 
         value=DEFAULT_NUM_SENTENCES,
-        help="Jumlah kalimat dalam ringkasan"
+        help="Number of sentences in the summary"
     )
     max_output_length = st.sidebar.slider(
         "Max Output Length (tokens)", 
         min_value=50, max_value=200, 
         value=MAX_OUTPUT_LEN,
-        help="Panjang maksimum output dalam token"
+        help="Maximum output length in tokens"
     )
     max_input_length = st.sidebar.slider(
         "Max Input Length (tokens)", 
         min_value=400, max_value=1024, 
         value=MAX_INPUT_LEN,
-        help="Panjang maksimum input dalam token"
+        help="Maximum input length in tokens"
     )
     num_beams = st.sidebar.slider(
         "Beam Search Width", 
         min_value=1, max_value=8, 
         value=DEFAULT_NUM_BEAMS,
-        help="Beam search: nilai lebih tinggi = kualitas lebih baik tapi lebih lambat"
+        help="Beam search: higher value = better quality but slower"
     )
     
     # Info model
@@ -455,49 +471,57 @@ def main():
         
         # Pilihan input method
         input_method = st.radio(
-            "Pilih metode input:",
-            ["📝 Manual Text", "🔗 URL Berita"],
+            "Choose input method:",
+            ["📝 Manual Text", "🔗 News URL"],
             horizontal=True
         )
         
         text_input = ""
         article_title = ""
         article_date = ""
+        article_url = ""
         
         if input_method == "📝 Manual Text":
-            # Optional: Title dan Date
-            col1, col2 = st.columns([3, 1])
+            # Title, Date and URL inputs
+            article_title = st.text_input(
+                "Judul Berita:",
+                placeholder="Masukkan judul berita...",
+                key="manual_title"
+            )
+            
+            col1, col2 = st.columns(2)
             with col1:
-                article_title = st.text_input(
-                    "Judul (opsional):",
-                    placeholder="Masukkan judul berita...",
-                    key="manual_title"
-                )
-            with col2:
                 article_date = st.text_input(
-                    "Tanggal (opsional):",
+                    "Tanggal Berita:",
                     placeholder="01/01/2024",
                     key="manual_date"
+                )
+            with col2:
+                article_url = st.text_input(
+                    "URL Berita:",
+                    placeholder="https://www.detik.com/...",
+                    key="manual_url"
                 )
             
             # Text input manual
             text_input = st.text_area(
-                "Enter Indonesian text to summarize:",
+                "Tempelkan teks berita disini:",
                 height=250,
-                placeholder="Masukkan teks berita atau artikel dalam Bahasa Indonesia di sini...",
+                placeholder="Tempelkan teks berita disini...",
                 key="manual_text"
             )
         else:
             # URL input
             url_input = st.text_input(
-                "Masukkan URL berita:",
+                "Enter news URL:",
                 placeholder="https://www.detik.com/...",
                 key="url_input"
             )
             
             if url_input:
+                article_url = url_input  # Store the URL
                 if st.button("📥 Fetch Article", key="fetch_btn"):
-                    with st.spinner("Mengambil artikel dari URL..."):
+                    with st.spinner("Fetching article from URL..."):
                         result, error = extract_text_from_url(url_input)
                         if error:
                             st.error(f"❌ {error}")
@@ -506,48 +530,43 @@ def main():
                             st.session_state['fetched_text'] = text_input
                             st.session_state['fetched_title'] = article_title
                             st.session_state['fetched_date'] = extracted_date
+                            st.session_state['fetched_url'] = url_input  # Store URL
                             
                             if extracted_date:
-                                st.success(f"✅ Artikel berhasil diambil! (Tanggal terdeteksi: {extracted_date})")
+                                st.success(f"✅ Article successfully fetched! (Date detected: {extracted_date})")
                             else:
-                                st.success("✅ Artikel berhasil diambil!")
+                                st.success("✅ Article successfully fetched!")
             
             # Display fetched text dan info jika ada
             if 'fetched_text' in st.session_state:
                 text_input = st.session_state['fetched_text']
                 article_title = st.session_state.get('fetched_title', '')
                 article_date = st.session_state.get('fetched_date', '')
+                article_url = st.session_state.get('fetched_url', url_input)  # Get stored URL
                 
                 col1, col2 = st.columns([3, 1])
                 with col1:
                     if article_title:
-                        st.markdown(f"**Judul:** {article_title}")
+                        st.markdown(f"**Title:** {article_title}")
                 with col2:
                     if article_date:
-                        st.markdown(f"**📅 Tanggal:** {article_date}")
+                        st.markdown(f"**📅 Date:** {article_date}")
                 
                 # Optional: override tanggal jika user mau
                 if not article_date:
                     article_date = st.text_input(
-                        "Tanggal tidak terdeteksi. Masukkan manual (opsional):",
-                        placeholder="01 Januari 2024",
+                        "Date not detected. Enter manually (optional):",
+                        placeholder="01 January 2024",
                         key="url_date_manual"
                     )
                 
                 st.text_area(
-                    "Teks artikel yang diambil:",
+                    "Fetched article text:",
                     value=text_input,
                     height=200,
                     key="display_fetched",
                     disabled=True
                 )
-        
-        # Translation option
-        translate_summary = st.checkbox(
-            "🌐 Translate summary to English",
-            value=False,
-            help="Otomatis terjemahkan ringkasan ke bahasa Inggris (memerlukan translation model)"
-        )
         
         col1, col2 = st.columns([1, 5])
         with col1:
@@ -559,99 +578,73 @@ def main():
         
         if summarize_btn:
             if not text_input.strip():
-                st.warning("⚠️ Silakan masukkan teks atau fetch artikel dari URL terlebih dahulu.")
+                st.warning("⚠️ Please enter text or fetch article from URL first.")
             else:
-                # Check if translation is needed and model not loaded
-                if translate_summary and not st.session_state['translation_loaded']:
-                    with st.spinner("Loading translation model..."):
-                        trans_model, trans_tokenizer, trans_device = load_translation_model()
-                        if trans_model is not None:
-                            st.session_state['translation_model'] = trans_model
-                            st.session_state['translation_tokenizer'] = trans_tokenizer
-                            st.session_state['translation_device'] = trans_device
-                            st.session_state['translation_loaded'] = True
-                        else:
-                            st.error("❌ Failed to load translation model")
-                            translate_summary = False
-                
-                with st.spinner("Generating summary..."):
+                with st.spinner("Generating summaries..."):
                     try:
-                        summary = summarize_long_text(
+                        # Generate Abstractive 1 sentence
+                        summary_1s = summarize_long_text(
                             text_input,
                             st.session_state['model'],
                             st.session_state['tokenizer'],
                             device=st.session_state['device'],
                             max_input_length=max_input_length,
                             max_output_length=max_output_length,
-                            num_sentences=num_sentences,
+                            num_sentences=1,
                             num_beams=num_beams,
-                            title=article_title if article_title.strip() else None,
-                            date=article_date if article_date.strip() else None,
                         )
                         
-                        st.success("✅ Summary generated!")
+                        # Generate Abstractive 3 sentences
+                        summary_3s = summarize_long_text(
+                            text_input,
+                            st.session_state['model'],
+                            st.session_state['tokenizer'],
+                            device=st.session_state['device'],
+                            max_input_length=max_input_length,
+                            max_output_length=max_output_length,
+                            num_sentences=3,
+                            num_beams=num_beams,
+                        )
                         
-                        # Translate summary if option is checked
-                        if translate_summary and st.session_state['translation_loaded']:
-                            with st.spinner("Translating summary to English..."):
-                                try:
-                                    # Extract text only (without header) for translation
-                                    summary_to_translate = summary
-                                    if article_title or article_date:
-                                        lines = summary.split("\n")
-                                        # Get only the summary part (last line)
-                                        summary_to_translate = lines[-1] if len(lines) > 0 else summary
-                                    
-                                    # Translate
-                                    translated_summary = translate_text(
-                                        summary_to_translate,
-                                        st.session_state['translation_model'],
-                                        st.session_state['translation_tokenizer'],
-                                        device=st.session_state['translation_device']
-                                    )
-                                    
-                                    # Display both versions side by side
-                                    st.markdown("### 📋 Ringkasan / Summary:")
-                                    col1, col2 = st.columns(2)
-                                    with col1:
-                                        st.markdown("#### 🇮🇩 Indonesian")
-                                        st.info(summary)
-                                    with col2:
-                                        st.markdown("#### 🇬🇧 English")
-                                        # Rebuild with header if exists
-                                        if article_title or article_date:
-                                            header_parts = []
-                                            if article_title:
-                                                header_parts.append(f"📰 {article_title}")
-                                            if article_date:
-                                                header_parts.append(f"📅 {article_date}")
-                                            header = "\n".join(header_parts)
-                                            translated_summary = f"{header}\n{translated_summary}"
-                                        st.success(translated_summary)
-                                    
-                                except Exception as e:
-                                    st.error(f"❌ Translation error: {e}")
-                                    st.markdown("### 📋 Ringkasan:")
-                                    st.info(summary)
-                        else:
-                            st.markdown("### 📋 Ringkasan:")
-                            st.info(summary)
+                        # Generate Extractive summary
+                        summary_extractive = extractive_summary(text_input, num_sentences=3)
                         
-                        # Statistics (hitung tanpa header jika ada)
-                        summary_text_only = summary
-                        if article_title or article_date:
-                            # Remove header lines untuk counting
-                            lines = summary.split("\n")
-                            summary_text_only = lines[-1] if len(lines) > 0 else summary
+                        st.success("✅ Summaries generated!")
                         
-                        col1, col2, col3 = st.columns(3)
+                        # Display metadata
+                        st.markdown("### 📰 Informasi Berita")
+                        if article_title:
+                            st.markdown(f"**Judul:** {article_title}")
+                        if article_date:
+                            st.markdown(f"**Tanggal:** {article_date}")
+                        if article_url:
+                            st.markdown(f"**URL:** [{article_url}]({article_url})")
+                        
+                        st.markdown("---")
+                        
+                        # Display summaries
+                        st.markdown("### 📋 Hasil Ringkasan")
+                        
+                        st.markdown("#### 1️⃣ Ringkasan Abstraktif 1 Kalimat")
+                        st.info(summary_1s)
+                        
+                        st.markdown("#### 3️⃣ Ringkasan Abstraktif 3 Kalimat")
+                        st.info(summary_3s)
+                        
+                        st.markdown("#### 📝 Ringkasan Ekstraktif")
+                        st.info(summary_extractive)
+                        
+                        # Statistics
+                        st.markdown("---")
+                        col1, col2, col3, col4 = st.columns(4)
                         with col1:
                             st.metric("Original Words", len(text_input.split()))
                         with col2:
-                            st.metric("Summary Words", len(summary_text_only.split()))
+                            st.metric("Abstractive 1S", f"{len(summary_1s.split())} words")
                         with col3:
-                            compression = (1 - len(summary_text_only.split()) / len(text_input.split())) * 100
-                            st.metric("Compression", f"{compression:.1f}%")
+                            st.metric("Abstractive 3S", f"{len(summary_3s.split())} words")
+                        with col4:
+                            st.metric("Extractive", f"{len(summary_extractive.split())} words")
                             
                     except Exception as e:
                         st.error(f"❌ Error during summarization: {e}")
@@ -659,12 +652,13 @@ def main():
     # Tab 2: Batch Processing
     with tab2:
         st.header("Batch Processing")
-        st.markdown("""Upload file CSV dengan kolom teks untuk meringkas banyak teks sekaligus.
+        st.markdown("""Upload a CSV file with text columns to summarize multiple texts at once.
         
-        **Format kolom yang didukung:**
-        - **Text**: `text`, `Isi Berita` (wajib)
-        - **Title**: `title`, `Judul` (opsional)
-        - **Date**: `date`, `Tanggal` (opsional)
+        **Supported column formats:**
+        - **Text**: `text`, `Isi Berita` (required)
+        - **Title**: `title`, `Judul` (optional)
+        - **Date**: `date`, `Tanggal` (optional)
+        - **URL**: `url`, `URL` (optional)
         """)
         
         uploaded_file = st.file_uploader("Choose a CSV file", type=['csv'])
@@ -687,52 +681,36 @@ def main():
                             return df_lower[name.lower()]
                     return None
                 
-                # Detect text column
+                # Detect columns
                 text_col = find_column(df, ['text', 'Isi Berita', 'isi berita', 'isi_berita'])
                 title_col = find_column(df, ['title', 'Judul', 'judul'])
                 date_col = find_column(df, ['date', 'Tanggal', 'tanggal'])
+                url_col = find_column(df, ['url', 'URL', 'link', 'Link'])
                 
                 if text_col is None:
-                    st.error("❌ File CSV harus memiliki kolom 'text' atau 'Isi Berita'")
+                    st.error("❌ CSV file must have a 'text' or 'Isi Berita' column")
                 else:
-                    st.info(f"📝 Kolom teks terdeteksi: **{text_col}**")
+                    st.info(f"📝 Text column detected: **{text_col}**")
                     
                     # Check optional columns
                     has_title = title_col is not None
                     has_date = date_col is not None
+                    has_url = url_col is not None
                     
-                    if has_title or has_date:
+                    if has_title or has_date or has_url:
                         optional_cols = []
                         if has_title:
                             optional_cols.append(f"'{title_col}'")
                         if has_date:
                             optional_cols.append(f"'{date_col}'")
-                        st.info(f"ℹ️ Kolom opsional ditemukan: {', '.join(optional_cols)}")
-                    
-                    # Translation option for batch
-                    translate_batch = st.checkbox(
-                        "🌐 Translate summaries to English",
-                        value=False,
-                        help="Otomatis terjemahkan semua ringkasan ke bahasa Inggris",
-                        key="translate_batch"
-                    )
+                        if has_url:
+                            optional_cols.append(f"'{url_col}'")
+                        st.info(f"ℹ️ Optional columns found: {', '.join(optional_cols)}")
                     
                     if st.button("🚀 Process All Texts", type="primary"):
-                        # Load translation model if needed
-                        if translate_batch and not st.session_state['translation_loaded']:
-                            with st.spinner("Loading translation model..."):
-                                trans_model, trans_tokenizer, trans_device = load_translation_model()
-                                if trans_model is not None:
-                                    st.session_state['translation_model'] = trans_model
-                                    st.session_state['translation_tokenizer'] = trans_tokenizer
-                                    st.session_state['translation_device'] = trans_device
-                                    st.session_state['translation_loaded'] = True
-                                else:
-                                    st.error("❌ Failed to load translation model")
-                                    translate_batch = False
-                        
-                        summaries = []
-                        translated_summaries = [] if translate_batch else None
+                        summaries_1s = []
+                        summaries_3s = []
+                        summaries_extractive = []
                         progress_bar = st.progress(0)
                         status_text = st.empty()
                         
@@ -740,82 +718,66 @@ def main():
                             status_text.text(f"Processing {idx+1}/{len(df)}...")
                             text = str(row[text_col]) if pd.notna(row[text_col]) else ""
                             
-                            # Get optional columns
-                            title = str(row[title_col]) if has_title and pd.notna(row.get(title_col)) else None
-                            date = str(row[date_col]) if has_date and pd.notna(row.get(date_col)) else None
-                            
                             if text.strip():
                                 try:
-                                    summary = summarize_long_text(
+                                    # Generate Abstractive 1 sentence
+                                    summary_1s = summarize_long_text(
                                         text,
                                         st.session_state['model'],
                                         st.session_state['tokenizer'],
                                         device=st.session_state['device'],
                                         max_input_length=max_input_length,
                                         max_output_length=max_output_length,
-                                        num_sentences=num_sentences,
+                                        num_sentences=1,
                                         num_beams=num_beams,
-                                        title=title,
-                                        date=date,
                                     )
-                                    summaries.append(summary)
+                                    summaries_1s.append(summary_1s)
                                     
-                                    # Translate if option is checked
-                                    if translate_batch and st.session_state['translation_loaded']:
-                                        try:
-                                            # Extract text only (without header) for translation
-                                            summary_to_translate = summary
-                                            if title or date:
-                                                lines = summary.split("\n")
-                                                summary_to_translate = lines[-1] if len(lines) > 0 else summary
-                                            
-                                            translated = translate_text(
-                                                summary_to_translate,
-                                                st.session_state['translation_model'],
-                                                st.session_state['translation_tokenizer'],
-                                                device=st.session_state['translation_device']
-                                            )
-                                            
-                                            # Rebuild with header if exists
-                                            if title or date:
-                                                header_parts = []
-                                                if title:
-                                                    header_parts.append(f"📰 {title}")
-                                                if date:
-                                                    header_parts.append(f"📅 {date}")
-                                                header = "\n".join(header_parts)
-                                                translated = f"{header}\n{translated}"
-                                            
-                                            translated_summaries.append(translated)
-                                        except Exception as e:
-                                            translated_summaries.append(f"Translation error: {str(e)}")
+                                    # Generate Abstractive 3 sentences
+                                    summary_3s = summarize_long_text(
+                                        text,
+                                        st.session_state['model'],
+                                        st.session_state['tokenizer'],
+                                        device=st.session_state['device'],
+                                        max_input_length=max_input_length,
+                                        max_output_length=max_output_length,
+                                        num_sentences=3,
+                                        num_beams=num_beams,
+                                    )
+                                    summaries_3s.append(summary_3s)
+                                    
+                                    # Generate Extractive summary
+                                    summary_ext = extractive_summary(text, num_sentences=3)
+                                    summaries_extractive.append(summary_ext)
                                     
                                 except Exception as e:
-                                    summaries.append(f"Error: {str(e)}")
-                                    if translate_batch:
-                                        translated_summaries.append("")
+                                    summaries_1s.append(f"Error: {str(e)}")
+                                    summaries_3s.append(f"Error: {str(e)}")
+                                    summaries_extractive.append(f"Error: {str(e)}")
                             else:
-                                summaries.append("")
-                                if translate_batch:
-                                    translated_summaries.append("")
+                                summaries_1s.append("")
+                                summaries_3s.append("")
+                                summaries_extractive.append("")
                             
                             progress_bar.progress((idx + 1) / len(df))
                         
                         # Add summaries to dataframe
-                        df['generated_summary'] = summaries
-                        if translate_batch:
-                            df['english_summary'] = translated_summaries
+                        df['ringkasan_abstraktif_1_kalimat'] = summaries_1s
+                        df['ringkasan_abstraktif_3_kalimat'] = summaries_3s
+                        df['ringkasan_ekstraktif'] = summaries_extractive
                         
                         st.success("✅ All texts processed!")
                         
                         # Display columns yang relevan
-                        display_cols = [text_col, 'generated_summary']
-                        if translate_batch:
-                            display_cols.append('english_summary')
+                        display_cols = []
                         if has_title:
-                            display_cols.insert(0, title_col)
+                            display_cols.append(title_col)
                         if has_date:
-                            display_cols.insert(1 if has_title else 0, date_col)
+                            display_cols.append(date_col)
+                        if has_url:
+                            display_cols.append(url_col)
+                        display_cols.extend([text_col, 'ringkasan_abstraktif_1_kalimat', 
+                                           'ringkasan_abstraktif_3_kalimat', 'ringkasan_ekstraktif'])
                         
                         st.dataframe(df[display_cols])
                         
@@ -834,7 +796,7 @@ def main():
     # Tab 3: Translation (Indonesian → English)
     with tab3:
         st.header("🌐 Translation: Indonesian → English")
-        st.markdown("Terjemahkan teks atau ringkasan dari Bahasa Indonesia ke Bahasa Inggris")
+        st.markdown("Translate text or summary from Indonesian to English")
         
         # Load translation model on demand
         if not st.session_state['translation_loaded']:
@@ -851,15 +813,15 @@ def main():
                     else:
                         st.error("❌ Failed to load translation model")
             
-            st.info("ℹ️ Klik tombol di atas untuk memuat model terjemahan (~300MB)")
+            st.info("ℹ️ Click the button above to load the translation model (~300MB)")
         else:
             st.success(f"✅ Translation model ready on {st.session_state.get('translation_device', 'cpu')}")
             
             # Translation input
             translation_input = st.text_area(
-                "Masukkan teks Bahasa Indonesia:",
+                "Enter Indonesian text:",
                 height=200,
-                placeholder="Contoh: Pemerintah mengumumkan kebijakan baru untuk meningkatkan perekonomian...",
+                placeholder="Example: Pemerintah mengumumkan kebijakan baru untuk meningkatkan perekonomian...",
                 key="translation_input"
             )
             
@@ -874,7 +836,7 @@ def main():
             
             if translate_btn:
                 if not translation_input.strip():
-                    st.warning("⚠️ Silakan masukkan teks yang akan diterjemahkan.")
+                    st.warning("⚠️ Please enter text to translate.")
                 else:
                     with st.spinner("Translating..."):
                         try:
@@ -921,10 +883,10 @@ def main():
             st.markdown("---")
             st.markdown("""
             **💡 Tips:**
-            - Model ini ringan (~300MB) dan cukup akurat untuk teks berita
-            - Cocok untuk: artikel berita, ringkasan, teks formal
-            - Untuk teks panjang (>400 kata), otomatis di-chunk
-            - Combine dengan summarization: ringkas dulu, lalu terjemahkan!
+            - This model is lightweight (~300MB) and accurate for news text
+            - Best for: news articles, summaries, formal text
+            - For long text (>400 words), automatically chunked
+            - Combine with summarization: summarize first, then translate!
             """)
     
     # Tab 4: About
@@ -932,24 +894,24 @@ def main():
         st.header("About This App")
         st.markdown("""
         ### 📖 Overview
-        Aplikasi ini menggunakan **IndoBART-v2** yang telah di-**fine-tune** dengan teknik 
-        **LoRA (Low-Rank Adaptation)** menggunakan dataset ringkasan berita lokal Indonesia 
-        (MC, MMC, dan Detik).
+        This application uses **IndoBART-v2** that has been **fine-tuned** with the 
+        **LoRA (Low-Rank Adaptation)** technique using Indonesian local news summary datasets 
+        (MC, MMC, and Detik).
         
         ### 🎯 Features
-        - **Single Text Summarization**: Meringkas teks individual secara instan
-        - **Title & Date Header**: Tambahkan judul dan tanggal opsional di header ringkasan
-        - **Batch Processing**: Memproses banyak teks dari file CSV (support kolom title & date)
-        - **URL Extraction**: Extract dan ringkas artikel dari URL berita
-          - **Auto-detect Date**: Otomatis ekstrak tanggal publikasi dari artikel
-          - **Smart Text Cleaning**: Otomatis filter watermark, copyright, dan teks sampah
+        - **Single Text Summarization**: Summarize individual text instantly
+        - **Title & Date Header**: Add optional title and date in summary header
+        - **Batch Processing**: Process multiple texts from CSV file (supports title & date columns)
+        - **URL Extraction**: Extract and summarize articles from news URLs
+          - **Auto-detect Date**: Automatically extract publication date from article
+          - **Smart Text Cleaning**: Automatically filter watermarks, copyrights, and junk text
         - **Translation (Indonesian → English)**: 🆕
-          - Model ringan Helsinki-NLP/opus-mt-id-en (~300MB)
-          - Support teks panjang dengan chunking otomatis
-          - Perfect combo: Ringkas → Terjemahkan
-        - **Advanced Truncation**: Otomatis potong kalimat panjang untuk ringkasan 1 kalimat
-        - **Customizable Parameters**: Sesuaikan pengaturan generasi untuk berbagai kasus
-        - **Long Text Support**: Otomatis chunking untuk teks yang melebihi batas token
+          - Lightweight Helsinki-NLP/opus-mt-id-en model (~300MB)
+          - Support long text with automatic chunking
+          - Perfect combo: Summarize → Translate
+        - **Advanced Truncation**: Automatically truncate long sentences for 1-sentence summary
+        - **Customizable Parameters**: Adjust generation settings for various cases
+        - **Long Text Support**: Automatic chunking for text exceeding token limits
         
         ### 🔧 Technical Details
         **Summarization:**
@@ -958,9 +920,9 @@ def main():
         - **Training Data**: MC, MMC, Detik (ringkasan berita lokal)
         - **Max Input**: 800 tokens (800 token per chunk)
         - **Max Output**: 100 tokens
-        - **Generation**: Beam search (4 beams) dengan no_repeat_ngram
+        - **Generation**: Beam search (4 beams) with no_repeat_ngram
         - **Advanced Features**: 
-          - Sentence truncation (max 22 words untuk 1 kalimat)
+          - Sentence truncation (max 22 words for 1 sentence)
           - Auto date extraction (regex: "\d{1,2}\s+\w+\s+\d{4}")
           - Text cleaning (filter: watermark, copyright, metadata)
         
@@ -974,44 +936,44 @@ def main():
         - **Device**: Auto-detect CUDA/CPU
         
         ### 📊 Generation Parameters
-        - **Num Beams**: Beam search width - nilai lebih tinggi = kualitas lebih baik (default: 4)
-        - **Max Output Length**: Panjang maksimum output dalam token (default: 100)
-        - **Max Input Length**: Panjang maksimum input, teks lebih panjang akan di-chunk (default: 800)
-        - **Num Sentences**: Jumlah kalimat dalam ringkasan akhir (default: 3)
-          - **1 kalimat**: Otomatis truncate di koma jika > 110 char, max 22 kata
-          - **Multi-kalimat**: Ambil N kalimat pertama dari hasil model
+        - **Num Beams**: Beam search width - higher value = better quality (default: 4)
+        - **Max Output Length**: Maximum output length in tokens (default: 100)
+        - **Max Input Length**: Maximum input length, longer text will be chunked (default: 800)
+        - **Num Sentences**: Number of sentences in final summary (default: 3)
+          - **1 sentence**: Auto truncate at comma if > 110 char, max 22 words
+          - **Multi-sentence**: Take first N sentences from model results
         
         ### 💡 Usage Tips
-        - Model ini telah di-fine-tune khusus untuk ringkasan berita Indonesia
-        - **Title & Date**: Masukkan judul dan tanggal untuk header ringkasan yang informatif
-        - **URL Mode**: Tanggal otomatis terdeteksi dari artikel (format: "5 Desember 2024")
-        - **Text Cleaning**: Scraper otomatis remove watermark (MTD, WF), copyright, dan metadata
-        - **1 Sentence Mode**: Cocok untuk headline/lead, otomatis dipotong jadi ringkasan ultra-padat
-        - **Batch CSV**: Support format dataset training (`Judul`, `Tanggal`, `Isi Berita`) atau format umum (`title`, `date`, `text`)
-        - **🆕 Translation**: Centang checkbox "Translate summary to English" di Tab 1/2 untuk auto-translate hasil
-          - Model translation hanya load saat diperlukan (lazy loading)
-          - Tab 1: Hasil ditampilkan side-by-side (Indonesia | English)
-          - Tab 2: Hasil punya kolom tambahan 'english_summary' di CSV
-        - Untuk hasil terbaik, gunakan kalimat lengkap dan teks terstruktur dengan baik
-        - Sesuaikan jumlah kalimat berdasarkan panjang ringkasan yang diinginkan
-        - Nilai beam search lebih tinggi menghasilkan kualitas lebih baik namun lebih lambat
-        - Model ini bekerja paling baik dengan teks berita dalam Bahasa Indonesia
+        - This model has been fine-tuned specifically for Indonesian news summaries
+        - **Title & Date**: Enter title and date for informative summary header
+        - **URL Mode**: Date automatically detected from article (format: "5 Desember 2024")
+        - **Text Cleaning**: Scraper automatically removes watermark (MTD, WF), copyright, and metadata
+        - **1 Sentence Mode**: Perfect for headline/lead, automatically truncated to ultra-compact summary
+        - **Batch CSV**: Supports training dataset format (`Judul`, `Tanggal`, `Isi Berita`) or general format (`title`, `date`, `text`)
+        - **🆕 Translation**: Check "Translate summary to English" checkbox in Tab 1/2 to auto-translate results
+          - Translation model only loads when needed (lazy loading)
+          - Tab 1: Results displayed side-by-side (Indonesian | English)
+          - Tab 2: Results have additional 'english_summary' column in CSV
+        - For best results, use complete sentences and well-structured text
+        - Adjust number of sentences based on desired summary length
+        - Higher beam search value produces better quality but slower
+        - This model works best with Indonesian news text
         
         ### 📚 Model Information
-        **Base Model**: IndoBART-v2 adalah model sequence-to-sequence berbasis BART yang di-pretrain 
-        pada korpus Bahasa Indonesia.
+        **Base Model**: IndoBART-v2 is a BART-based sequence-to-sequence model pretrained 
+        on Indonesian language corpus.
         
-        **Fine-tuning**: Model ini telah di-fine-tune menggunakan:
-        - **Teknik**: LoRA (Low-Rank Adaptation) dengan PEFT
-        - **Dataset**: Gabungan dataset MC, MMC, dan Detik (berita Indonesia)
+        **Fine-tuning**: This model has been fine-tuned using:
+        - **Technique**: LoRA (Low-Rank Adaptation) with PEFT
+        - **Dataset**: Combined MC, MMC, and Detik datasets (Indonesian news)
         - **Parameters**: r=16, lora_alpha=32, lora_dropout=0.05
         - **Target Modules**: q_proj, k_proj, v_proj, o_proj, fc1, fc2
-        - **Training**: 5 epochs dengan learning rate 5e-5
+        - **Training**: 5 epochs with learning rate 5e-5
         
         **Paper**: [IndoNLG: Benchmark and Resources for Evaluating Indonesian Natural Language Generation](https://aclanthology.org/2021.emnlp-main.699/)
         
         ### 🤝 Support
-        Untuk pertanyaan atau masalah, silakan merujuk pada dokumentasi model atau hubungi tim pengembang.
+        For questions or issues, please refer to the model documentation or contact the development team.
         """)
         
         st.markdown("---")
