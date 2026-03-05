@@ -542,6 +542,13 @@ def main():
                     disabled=True
                 )
         
+        # Translation option
+        translate_summary = st.checkbox(
+            "🌐 Translate summary to English",
+            value=False,
+            help="Otomatis terjemahkan ringkasan ke bahasa Inggris (memerlukan translation model)"
+        )
+        
         col1, col2 = st.columns([1, 5])
         with col1:
             summarize_btn = st.button("🚀 Summarize", type="primary")
@@ -554,6 +561,19 @@ def main():
             if not text_input.strip():
                 st.warning("⚠️ Silakan masukkan teks atau fetch artikel dari URL terlebih dahulu.")
             else:
+                # Check if translation is needed and model not loaded
+                if translate_summary and not st.session_state['translation_loaded']:
+                    with st.spinner("Loading translation model..."):
+                        trans_model, trans_tokenizer, trans_device = load_translation_model()
+                        if trans_model is not None:
+                            st.session_state['translation_model'] = trans_model
+                            st.session_state['translation_tokenizer'] = trans_tokenizer
+                            st.session_state['translation_device'] = trans_device
+                            st.session_state['translation_loaded'] = True
+                        else:
+                            st.error("❌ Failed to load translation model")
+                            translate_summary = False
+                
                 with st.spinner("Generating summary..."):
                     try:
                         summary = summarize_long_text(
@@ -571,14 +591,57 @@ def main():
                         
                         st.success("✅ Summary generated!")
                         
-                        st.markdown("### 📋 Ringkasan:")
-                        st.info(summary)
+                        # Translate summary if option is checked
+                        if translate_summary and st.session_state['translation_loaded']:
+                            with st.spinner("Translating summary to English..."):
+                                try:
+                                    # Extract text only (without header) for translation
+                                    summary_to_translate = summary
+                                    if article_title or article_date:
+                                        lines = summary.split("\n")
+                                        # Get only the summary part (last line)
+                                        summary_to_translate = lines[-1] if len(lines) > 0 else summary
+                                    
+                                    # Translate
+                                    translated_summary = translate_text(
+                                        summary_to_translate,
+                                        st.session_state['translation_model'],
+                                        st.session_state['translation_tokenizer'],
+                                        device=st.session_state['translation_device']
+                                    )
+                                    
+                                    # Display both versions side by side
+                                    st.markdown("### 📋 Ringkasan / Summary:")
+                                    col1, col2 = st.columns(2)
+                                    with col1:
+                                        st.markdown("#### 🇮🇩 Indonesian")
+                                        st.info(summary)
+                                    with col2:
+                                        st.markdown("#### 🇬🇧 English")
+                                        # Rebuild with header if exists
+                                        if article_title or article_date:
+                                            header_parts = []
+                                            if article_title:
+                                                header_parts.append(f"📰 {article_title}")
+                                            if article_date:
+                                                header_parts.append(f"📅 {article_date}")
+                                            header = "\n".join(header_parts)
+                                            translated_summary = f"{header}\n{translated_summary}"
+                                        st.success(translated_summary)
+                                    
+                                except Exception as e:
+                                    st.error(f"❌ Translation error: {e}")
+                                    st.markdown("### 📋 Ringkasan:")
+                                    st.info(summary)
+                        else:
+                            st.markdown("### 📋 Ringkasan:")
+                            st.info(summary)
                         
                         # Statistics (hitung tanpa header jika ada)
                         summary_text_only = summary
                         if article_title or article_date:
                             # Remove header lines untuk counting
-                            lines = summary.split("\\n")
+                            lines = summary.split("\n")
                             summary_text_only = lines[-1] if len(lines) > 0 else summary
                         
                         col1, col2, col3 = st.columns(3)
@@ -596,8 +659,13 @@ def main():
     # Tab 2: Batch Processing
     with tab2:
         st.header("Batch Processing")
-        st.markdown("Upload file CSV dengan kolom 'text' untuk meringkas banyak teks sekaligus.")
-        st.markdown("*Opsional: Tambahkan kolom 'title' dan 'date' untuk header di ringkasan.*")
+        st.markdown("""Upload file CSV dengan kolom teks untuk meringkas banyak teks sekaligus.
+        
+        **Format kolom yang didukung:**
+        - **Text**: `text`, `Isi Berita` (wajib)
+        - **Title**: `title`, `Judul` (opsional)
+        - **Date**: `date`, `Tanggal` (opsional)
+        """)
         
         uploaded_file = st.file_uploader("Choose a CSV file", type=['csv'])
         
@@ -610,34 +678,71 @@ def main():
                 st.markdown("**Preview:**")
                 st.dataframe(df.head())
                 
-                # Check for 'text' column
-                if 'text' not in df.columns:
-                    st.error("❌ File CSV harus memiliki kolom 'text'")
+                # Flexible column detection (case-insensitive)
+                def find_column(df, names):
+                    """Find column by multiple possible names (case-insensitive)"""
+                    df_lower = {col.lower(): col for col in df.columns}
+                    for name in names:
+                        if name.lower() in df_lower:
+                            return df_lower[name.lower()]
+                    return None
+                
+                # Detect text column
+                text_col = find_column(df, ['text', 'Isi Berita', 'isi berita', 'isi_berita'])
+                title_col = find_column(df, ['title', 'Judul', 'judul'])
+                date_col = find_column(df, ['date', 'Tanggal', 'tanggal'])
+                
+                if text_col is None:
+                    st.error("❌ File CSV harus memiliki kolom 'text' atau 'Isi Berita'")
                 else:
+                    st.info(f"📝 Kolom teks terdeteksi: **{text_col}**")
+                    
                     # Check optional columns
-                    has_title = 'title' in df.columns
-                    has_date = 'date' in df.columns
+                    has_title = title_col is not None
+                    has_date = date_col is not None
                     
                     if has_title or has_date:
                         optional_cols = []
                         if has_title:
-                            optional_cols.append("'title'")
+                            optional_cols.append(f"'{title_col}'")
                         if has_date:
-                            optional_cols.append("'date'")
+                            optional_cols.append(f"'{date_col}'")
                         st.info(f"ℹ️ Kolom opsional ditemukan: {', '.join(optional_cols)}")
                     
+                    # Translation option for batch
+                    translate_batch = st.checkbox(
+                        "🌐 Translate summaries to English",
+                        value=False,
+                        help="Otomatis terjemahkan semua ringkasan ke bahasa Inggris",
+                        key="translate_batch"
+                    )
+                    
                     if st.button("🚀 Process All Texts", type="primary"):
+                        # Load translation model if needed
+                        if translate_batch and not st.session_state['translation_loaded']:
+                            with st.spinner("Loading translation model..."):
+                                trans_model, trans_tokenizer, trans_device = load_translation_model()
+                                if trans_model is not None:
+                                    st.session_state['translation_model'] = trans_model
+                                    st.session_state['translation_tokenizer'] = trans_tokenizer
+                                    st.session_state['translation_device'] = trans_device
+                                    st.session_state['translation_loaded'] = True
+                                else:
+                                    st.error("❌ Failed to load translation model")
+                                    translate_batch = False
+                        
                         summaries = []
+                        translated_summaries = [] if translate_batch else None
                         progress_bar = st.progress(0)
                         status_text = st.empty()
                         
                         for idx, row in df.iterrows():
                             status_text.text(f"Processing {idx+1}/{len(df)}...")
-                            text = str(row['text']) if pd.notna(row['text']) else ""
+                            text = str(row[text_col]) if pd.notna(row[text_col]) else ""
                             
                             # Get optional columns
-                            title = str(row['title']) if has_title and pd.notna(row.get('title')) else None
-                            date = str(row['date']) if has_date and pd.notna(row.get('date')) else None
+                            title = str(row[title_col]) if has_title and pd.notna(row.get(title_col)) else None
+                            date = str(row[date_col]) if has_date and pd.notna(row.get(date_col)) else None
                             
                             if text.strip():
                                 try:
@@ -654,24 +759,63 @@ def main():
                                         date=date,
                                     )
                                     summaries.append(summary)
+                                    
+                                    # Translate if option is checked
+                                    if translate_batch and st.session_state['translation_loaded']:
+                                        try:
+                                            # Extract text only (without header) for translation
+                                            summary_to_translate = summary
+                                            if title or date:
+                                                lines = summary.split("\n")
+                                                summary_to_translate = lines[-1] if len(lines) > 0 else summary
+                                            
+                                            translated = translate_text(
+                                                summary_to_translate,
+                                                st.session_state['translation_model'],
+                                                st.session_state['translation_tokenizer'],
+                                                device=st.session_state['translation_device']
+                                            )
+                                            
+                                            # Rebuild with header if exists
+                                            if title or date:
+                                                header_parts = []
+                                                if title:
+                                                    header_parts.append(f"📰 {title}")
+                                                if date:
+                                                    header_parts.append(f"📅 {date}")
+                                                header = "\n".join(header_parts)
+                                                translated = f"{header}\n{translated}"
+                                            
+                                            translated_summaries.append(translated)
+                                        except Exception as e:
+                                            translated_summaries.append(f"Translation error: {str(e)}")
+                                    
                                 except Exception as e:
                                     summaries.append(f"Error: {str(e)}")
+                                    if translate_batch:
+                                        translated_summaries.append("")
                             else:
                                 summaries.append("")
+                                if translate_batch:
+                                    translated_summaries.append("")
                             
                             progress_bar.progress((idx + 1) / len(df))
                         
                         # Add summaries to dataframe
                         df['generated_summary'] = summaries
+                        if translate_batch:
+                            df['english_summary'] = translated_summaries
                         
                         st.success("✅ All texts processed!")
                         
                         # Display columns yang relevan
-                        display_cols = ['text', 'generated_summary']
+                        display_cols = [text_col, 'generated_summary']
+                        if translate_batch:
+                            display_cols.append('english_summary')
                         if has_title:
-                            display_cols.insert(0, 'title')
+                            display_cols.insert(0, title_col)
                         if has_date:
-                            display_cols.insert(1 if has_title else 0, 'date')
+                            display_cols.insert(1 if has_title else 0, date_col)
                         
                         st.dataframe(df[display_cols])
                         
@@ -843,7 +987,11 @@ def main():
         - **URL Mode**: Tanggal otomatis terdeteksi dari artikel (format: "5 Desember 2024")
         - **Text Cleaning**: Scraper otomatis remove watermark (MTD, WF), copyright, dan metadata
         - **1 Sentence Mode**: Cocok untuk headline/lead, otomatis dipotong jadi ringkasan ultra-padat
-        - **Batch CSV**: File CSV bisa punya kolom 'text', 'title' (opsional), 'date' (opsional)
+        - **Batch CSV**: Support format dataset training (`Judul`, `Tanggal`, `Isi Berita`) atau format umum (`title`, `date`, `text`)
+        - **🆕 Translation**: Centang checkbox "Translate summary to English" di Tab 1/2 untuk auto-translate hasil
+          - Model translation hanya load saat diperlukan (lazy loading)
+          - Tab 1: Hasil ditampilkan side-by-side (Indonesia | English)
+          - Tab 2: Hasil punya kolom tambahan 'english_summary' di CSV
         - Untuk hasil terbaik, gunakan kalimat lengkap dan teks terstruktur dengan baik
         - Sesuaikan jumlah kalimat berdasarkan panjang ringkasan yang diinginkan
         - Nilai beam search lebih tinggi menghasilkan kualitas lebih baik namun lebih lambat

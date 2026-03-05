@@ -51,11 +51,25 @@ Aplikasi akan terbuka di browser pada `http://localhost:8501`
 - Lihat statistik kompresi
 
 ### 2️⃣ Batch Processing
-- Upload file CSV dengan kolom 'text'
-- Proses banyak teks sekaligus
-- Download hasil dalam format CSV
+- Upload file CSV dengan kolom text (atau `Isi Berita`)
+- Support format dataset training: `Judul`, `Tanggal`, `text`/`Isi Berita`
+- Proses banyak teks sekaligus dengan optional translation
+- Download hasil dalam format CSV (include kolom `generated_summary` & `english_summary`)
 
-### 3️⃣ Customizable Parameters
+### 3️⃣ Translation (Indonesian → English)
+- Centang checkbox untuk auto-translate hasil ringkasan
+- Model ringan Helsinki-NLP/opus-mt-id-en (~300MB)
+- Support teks panjang dengan chunking otomatis
+- Tab 1: Side-by-side display (Indonesia | English)
+- Tab 2: CSV output dengan kolom tambahan `english_summary`
+
+### 4️⃣ URL Extraction
+- Input URL artikel berita
+- Auto-extract tanggal publikasi dari artikel
+- Smart text cleaning (filter watermark, copyright, metadata)
+- Langsung ringkas artikel yang di-scrape
+
+### 5️⃣ Customizable Parameters
 - **Number of Sentences**: Jumlah kalimat dalam ringkasan (1-10)
 - **Max Output Length**: Panjang maksimum output dalam token (50-200)
 - **Max Input Length**: Panjang maksimum input dalam token (400-1024)
@@ -64,13 +78,43 @@ Aplikasi akan terbuka di browser pada `http://localhost:8501`
 
 ## 📊 CSV Format untuk Batch Processing
 
-File CSV harus memiliki minimal satu kolom bernama `text`:
+Aplikasi mendukung 2 format CSV:
 
+### Format 1: Dataset Training (Compatible)
+```csv
+Judul,Tanggal,text
+"Judul Berita 1",01/03/2026,"Isi berita yang akan diringkas..."
+"Judul Berita 2",02/03/2026,"Isi berita kedua..."
+```
+
+Atau dengan kolom `Isi Berita`:
+```csv
+Judul,Tanggal,Isi Berita
+"Judul Berita 1",01/03/2026,"Isi berita yang akan diringkas..."
+```
+
+### Format 2: Format Umum (English headers)
+```csv
+title,date,text
+"News Title 1",01/03/2026,"Text content to be summarized..."
+"News Title 2",02/03/2026,"Second news content..."
+```
+
+### Format Minimal (hanya text)
 ```csv
 text
 "Berita pertama yang akan diringkas..."
 "Berita kedua yang akan diringkas..."
 ```
+
+**Catatan:**
+- Kolom **text** atau **Isi Berita** adalah **wajib**
+- Kolom **Judul/title** dan **Tanggal/date** adalah **opsional** (akan ditambahkan sebagai header di ringkasan)
+- Deteksi kolom **case-insensitive** (`Judul` = `judul` = `JUDUL`)
+- File example: 
+  - Format umum: [`example_batch.csv`](example_batch.csv)
+  - Format dataset: [`example_batch_dataset.csv`](example_batch_dataset.csv)
+- Output akan memiliki kolom `generated_summary` (dan `english_summary` jika translate dicentang)
 
 ## 🔧 Troubleshooting
 
