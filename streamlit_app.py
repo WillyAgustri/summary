@@ -11,7 +11,7 @@ import types
 import pandas as pd
 import os
 from indobenchmark import IndoNLGTokenizer
-from transformers import AutoModelForSeq2SeqLM, GenerationConfig
+from transformers import AutoModelForSeq2SeqLM, GenerationConfig, MarianMTModel, MarianTokenizer
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from peft import PeftModel, LoraConfig, get_peft_model, TaskType
 from typing import List
@@ -25,11 +25,12 @@ from urllib.parse import urlparse
 # ============================================================
 MODEL_NAME = "indobenchmark/indobart-v2"  # Base model dari HuggingFace
 CHECKPOINT_PATH = "outputs/indobart-v2-detik/checkpoint-800"  # Path ke checkpoint fine-tuned
+TRANSLATION_MODEL = "Helsinki-NLP/opus-mt-id-en"  # Model terjemahan Indonesia-Inggris
 MAX_INPUT_LEN = 800
 MAX_OUTPUT_LEN = 100
 DEFAULT_NUM_SENTENCES = 3
 DEFAULT_NUM_BEAMS = 4
-PAGE_TITLE = "Indonesian Text Summarizer (Fine-tuned)"
+PAGE_TITLE = "Indonesian Text Summarizer + Translator"
 PAGE_ICON = "📝"
 LAYOUT = "wide"
 
@@ -129,6 +130,19 @@ st.set_page_config(
 # ============================================================
 # HELPER FUNCTIONS
 # ============================================================
+
+@st.cache_resource
+def load_translation_model():
+    """Load translation model (Indonesian → English)""";
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    try:
+        translation_model = MarianMTModel.from_pretrained(TRANSLATION_MODEL).to(device)
+        translation_tokenizer = MarianTokenizer.from_pretrained(TRANSLATION_MODEL)
+        translation_model.eval()
+        return translation_model, translation_tokenizer, device
+    except Exception as e:
+        st.error(f"Error loading translation model: {e}")
+        return None, None, device
 
 @st.cache_resource
 def load_model_and_tokenizer():
@@ -321,32 +335,82 @@ def summarize_long_text(
     return final_summary
 
 # ============================================================
+# TRANSLATION FUNCTIONS
+# ============================================================
+
+def translate_text(text: str, model, tokenizer, device="cpu", max_length: int = 512) -> str:
+    """Translate Indonesian text to English"""
+    inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=max_length).to(device)
+    
+    with torch.no_grad():
+        translated = model.generate(**inputs, max_length=max_length)
+    
+    translated_text = tokenizer.decode(translated[0], skip_special_tokens=True)
+    return translated_text
+
+def translate_long_text(text: str, model, tokenizer, device="cpu", max_length: int = 512, chunk_size: int = 400) -> str:
+    """Translate long text by splitting into chunks"""
+    # Split text into sentences to maintain context
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    
+    chunks = []
+    current_chunk = []
+    current_length = 0
+    
+    for sentence in sentences:
+        sentence_length = len(sentence.split())
+        if current_length + sentence_length > chunk_size and current_chunk:
+            chunks.append(" ".join(current_chunk))
+            current_chunk = [sentence]
+            current_length = sentence_length
+        else:
+            current_chunk.append(sentence)
+            current_length += sentence_length
+    
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+    
+    # Translate each chunk
+    translated_chunks = []
+    for chunk in chunks:
+        translated = translate_text(chunk, model, tokenizer, device, max_length)
+        translated_chunks.append(translated)
+    
+    return " ".join(translated_chunks)
+
+# ============================================================
 # MAIN APP
 # ============================================================
 
 def main():
-    st.title("📝 Indonesian Text Summarizer (Fine-tuned)")
-    st.markdown(f"**Base Model:** {MODEL_NAME}")
-    st.markdown(f"**Fine-tuned Checkpoint:** {CHECKPOINT_PATH}")
+    st.title("📝 Indonesian Text Summarizer + Translator")
+    st.markdown(f"**Summarization Model:** {MODEL_NAME} (Fine-tuned)")
+    st.markdown(f"**Translation Model:** {TRANSLATION_MODEL}")
     
     # Sidebar untuk konfigurasi
     st.sidebar.header("⚙️ Configuration")
     
     # Load model secara otomatis
     if 'model' not in st.session_state:
-        with st.spinner("Loading model from HuggingFace..."):
+        with st.spinner("Loading summarization model..."):
             model, tokenizer, device = load_model_and_tokenizer()
             if model is not None:
                 st.session_state['model'] = model
                 st.session_state['tokenizer'] = tokenizer
                 st.session_state['device'] = device
-                st.sidebar.success(f"✅ Model loaded on {device}")
+                st.sidebar.success(f"✅ Summarization model loaded on {device}")
             else:
                 st.sidebar.error("❌ Failed to load model")
                 st.error("⚠️ Gagal memuat model. Silakan refresh halaman.")
                 return
     else:
-        st.sidebar.success(f"✅ Model ready on {st.session_state['device']}")
+        st.sidebar.success(f"✅ Summarization model ready on {st.session_state['device']}")
+    
+    # Load translation model (lazy loading)
+    if 'translation_model' not in st.session_state:
+        st.session_state['translation_model'] = None
+        st.session_state['translation_tokenizer'] = None
+        st.session_state['translation_loaded'] = False
     
     # Generation parameters
     st.sidebar.header("🎛️ Generation Parameters")
@@ -383,7 +447,7 @@ def main():
     st.sidebar.markdown(f"**Device:** `{st.session_state['device']}`")
     
     # Main content
-    tab1, tab2, tab3 = st.tabs(["📄 Single Text", "📊 Batch Processing", "ℹ️ About"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📄 Single Text", "📊 Batch Processing", "🌐 Translation", "ℹ️ About"])
     
     # Tab 1: Single Text Summarization
     with tab1:
@@ -623,8 +687,104 @@ def main():
             except Exception as e:
                 st.error(f"❌ Error loading file: {e}")
     
-    # Tab 3: About
+    # Tab 3: Translation (Indonesian → English)
     with tab3:
+        st.header("🌐 Translation: Indonesian → English")
+        st.markdown("Terjemahkan teks atau ringkasan dari Bahasa Indonesia ke Bahasa Inggris")
+        
+        # Load translation model on demand
+        if not st.session_state['translation_loaded']:
+            if st.button("📥 Load Translation Model", type="primary"):
+                with st.spinner("Loading translation model (Helsinki-NLP/opus-mt-id-en)..."):
+                    trans_model, trans_tokenizer, trans_device = load_translation_model()
+                    if trans_model is not None:
+                        st.session_state['translation_model'] = trans_model
+                        st.session_state['translation_tokenizer'] = trans_tokenizer
+                        st.session_state['translation_device'] = trans_device
+                        st.session_state['translation_loaded'] = True
+                        st.success(f"✅ Translation model loaded on {trans_device}")
+                        st.rerun()
+                    else:
+                        st.error("❌ Failed to load translation model")
+            
+            st.info("ℹ️ Klik tombol di atas untuk memuat model terjemahan (~300MB)")
+        else:
+            st.success(f"✅ Translation model ready on {st.session_state.get('translation_device', 'cpu')}")
+            
+            # Translation input
+            translation_input = st.text_area(
+                "Masukkan teks Bahasa Indonesia:",
+                height=200,
+                placeholder="Contoh: Pemerintah mengumumkan kebijakan baru untuk meningkatkan perekonomian...",
+                key="translation_input"
+            )
+            
+            # Translation options
+            col1, col2 = st.columns([1, 5])
+            with col1:
+                translate_btn = st.button("🔄 Translate", type="primary")
+            with col2:
+                if translation_input:
+                    word_count = len(translation_input.split())
+                    st.caption(f"Input: {word_count} words")
+            
+            if translate_btn:
+                if not translation_input.strip():
+                    st.warning("⚠️ Silakan masukkan teks yang akan diterjemahkan.")
+                else:
+                    with st.spinner("Translating..."):
+                        try:
+                            # Translate text
+                            if len(translation_input.split()) > 400:
+                                # Long text: use chunking
+                                translated = translate_long_text(
+                                    translation_input,
+                                    st.session_state['translation_model'],
+                                    st.session_state['translation_tokenizer'],
+                                    device=st.session_state['translation_device']
+                                )
+                            else:
+                                # Short text: direct translation
+                                translated = translate_text(
+                                    translation_input,
+                                    st.session_state['translation_model'],
+                                    st.session_state['translation_tokenizer'],
+                                    device=st.session_state['translation_device']
+                                )
+                            
+                            st.success("✅ Translation completed!")
+                            
+                            # Display results side by side
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.markdown("### 🇮🇩 Indonesian")
+                                st.info(translation_input)
+                            with col2:
+                                st.markdown("### 🇬🇧 English")
+                                st.success(translated)
+                            
+                            # Statistics
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.metric("Indonesian Words", len(translation_input.split()))
+                            with col2:
+                                st.metric("English Words", len(translated.split()))
+                                
+                        except Exception as e:
+                            st.error(f"❌ Error during translation: {e}")
+            
+            # Quick tip
+            st.markdown("---")
+            st.markdown("""
+            **💡 Tips:**
+            - Model ini ringan (~300MB) dan cukup akurat untuk teks berita
+            - Cocok untuk: artikel berita, ringkasan, teks formal
+            - Untuk teks panjang (>400 kata), otomatis di-chunk
+            - Combine dengan summarization: ringkas dulu, lalu terjemahkan!
+            """)
+    
+    # Tab 4: About
+    with tab4:
         st.header("About This App")
         st.markdown("""
         ### 📖 Overview
@@ -639,11 +799,16 @@ def main():
         - **URL Extraction**: Extract dan ringkas artikel dari URL berita
           - **Auto-detect Date**: Otomatis ekstrak tanggal publikasi dari artikel
           - **Smart Text Cleaning**: Otomatis filter watermark, copyright, dan teks sampah
+        - **Translation (Indonesian → English)**: 🆕
+          - Model ringan Helsinki-NLP/opus-mt-id-en (~300MB)
+          - Support teks panjang dengan chunking otomatis
+          - Perfect combo: Ringkas → Terjemahkan
         - **Advanced Truncation**: Otomatis potong kalimat panjang untuk ringkasan 1 kalimat
         - **Customizable Parameters**: Sesuaikan pengaturan generasi untuk berbagai kasus
         - **Long Text Support**: Otomatis chunking untuk teks yang melebihi batas token
         
         ### 🔧 Technical Details
+        **Summarization:**
         - **Base Model**: IndoBART-v2 (indobenchmark/indobart-v2)
         - **Fine-tuning**: LoRA/PEFT dengan dataset berita Indonesia
         - **Training Data**: MC, MMC, Detik (ringkasan berita lokal)
@@ -654,6 +819,14 @@ def main():
           - Sentence truncation (max 22 words untuk 1 kalimat)
           - Auto date extraction (regex: "\d{1,2}\s+\w+\s+\d{4}")
           - Text cleaning (filter: watermark, copyright, metadata)
+        
+        **Translation:**
+        - **Model**: Helsinki-NLP/opus-mt-id-en (MarianMT)
+        - **Direction**: Indonesian → English only
+        - **Size**: ~300MB (lightweight)
+        - **Max tokens**: 512 per chunk
+        - **Auto-chunking**: Support teks >400 kata
+        
         - **Device**: Auto-detect CUDA/CPU
         
         ### 📊 Generation Parameters
